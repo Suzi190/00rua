@@ -43,6 +43,7 @@ jobs:
               </style>
           </resources>
           EOF
+          sed -i '/AppTheme\.NoActionBarLaunch/d' android/app/src/main/AndroidManifest.xml
           sed -i 's|android:name="\.MainActivity"|android:name=".MainActivity" android:theme="@style/AppTheme"|' android/app/src/main/AndroidManifest.xml
       - name: 允许HTTP明文
         run: sed -i 's|<application|<application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
