@@ -1,5 +1,9 @@
 {
   "appId": "com.rua.phone",
   "appName": "rua小手机",
-  "webDir": "www"
+  "webDir": "www",
+  "backgroundColor": "#fff5f8",
+  "android": {
+    "allowMixedContent": true
+  }
 }

@@ -4,6 +4,7 @@
   "description": "rua小手机",
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
-    "@capacitor/android": "^6.0.0"
+    "@capacitor/android": "^6.0.0",
+    "leaflet": "1.9.4"
   }
 }

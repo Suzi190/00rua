@@ -15064,6 +15064,14 @@ const previewScript = () => {
 const exportScriptData = () => {
   const data = collectScriptData();
   const json = JSON.stringify(data, null, 2);
+  // APK 模式：交给原生保存到手机「下载」目录（WebView 里 a.download 不生效）
+  if (window.AndroidFileSaver) {
+    try {
+      window.AndroidFileSaver.saveTextFile((data.name || 'script') + '.json', json, 'application/json');
+      if (typeof toast === 'function') toast('已导出JSON文件（下载目录）');
+      return;
+    } catch (e) {}
+  }
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -15078,6 +15086,14 @@ const exportScript = async (scriptId) => {
   try {
     const data = await novelAPI.getScript(scriptId);
     const json = JSON.stringify(data, null, 2);
+    // APK 模式：交给原生保存到手机「下载」目录
+    if (window.AndroidFileSaver) {
+      try {
+        window.AndroidFileSaver.saveTextFile((data.name || 'script') + '.json', json, 'application/json');
+        if (typeof toast === 'function') toast('已导出JSON文件（下载目录）');
+        return;
+      } catch (err) {}
+    }
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

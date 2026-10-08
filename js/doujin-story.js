@@ -498,6 +498,14 @@
       (book.chapters || []).forEach(function (c, i) {
         t += '\n\n第' + (i + 1) + '章　' + (c.title || '') + '\n\n' + (c.text || '（未写）') + '\n';
       });
+      // APK 模式：交给原生保存到手机「下载」目录（WebView 里 a.download 不生效）
+      if (window.AndroidFileSaver) {
+        try {
+          window.AndroidFileSaver.saveTextFile((book.title || '小说') + '.txt', t, 'text/plain;charset=utf-8');
+          toast('已导出到下载目录');
+          return;
+        } catch (err) {}
+      }
       var blob = new Blob([t], { type: 'text/plain;charset=utf-8' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob); a.download = (book.title || '小说') + '.txt';

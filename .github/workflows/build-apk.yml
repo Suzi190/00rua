@@ -2,73 +2,135 @@ name: 打包APK
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - uses: actions/setup-java@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: 设置Android环境变量
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-      - name: 准备www目录
-        run: |
-          mkdir -p www
-          cp -r js css *.html *.json *.png *.ico *.webmanifest www/ 2>/dev/null || true
-          cp manifest.json www/ 2>/dev/null || true
-      - run: npm install
-      - run: npx cap init "rua小手机" "com.rua.phone" --web-dir=www
-      - run: npx cap add android
-      - run: npx cap sync
-      - name: 设置沉浸全屏
-        run: |
-          cat > android/app/src/main/res/values/styles.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-                  <item name="android:windowNoTitle">true</item>
-                  <item name="android:windowFullscreen">true</item>
-              </style>
-          </resources>
-          EOF
-          sed -i '/AppTheme\.NoActionBarLaunch/d' android/app/src/main/AndroidManifest.xml
-          sed -i 's|android:name="\.MainActivity"|android:name=".MainActivity" android:theme="@style/AppTheme"|' android/app/src/main/AndroidManifest.xml
-          sed -i 's|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport android.view.View;|' android/app/src/main/java/com/rua/phone/MainActivity.java
-          sed -i '/super\.onCreate/i\
-          hideSystemUI();' android/app/src/main/java/com/rua/phone/MainActivity.java
-          cat >> android/app/src/main/java/com/rua/phone/MainActivity.java << 'JAVAEOF'
 
-              private void hideSystemUI() {
-                  getWindow().getDecorView().setSystemUiVisibility(
-                      View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                      | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                      | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                      | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                      | View.SYSTEM_UI_FLAG_FULLSCREEN
-                      | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-              }
-          }
-          JAVAEOF
-      - name: 添加文件权限
+      - name: 准备 Android SDK
         run: |
-          sed -i 's|<application|<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <application|' android/app/src/main/AndroidManifest.xml
-      - name: 允许HTTP明文
-        run: sed -i 's|<application|<application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
-      - name: 编译APK
-        run: cd android && ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+          set -e
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          if [ -z "$SDK" ] || [ ! -d "$SDK" ]; then SDK="$HOME/Android/Sdk"; fi
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          SM="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          if [ -x "$SM" ]; then
+            yes | "$SM" --licenses > /dev/null 2>&1 || true
+            "$SM" "platforms;android-34" "build-tools;34.0.0" "platform-tools" > /dev/null 2>&1 || true
+          fi
+          echo "SDK 目录：$SDK"
+          ls "$SDK/platforms" || true
+
+      - name: 安装依赖
+        run: npm install
+
+      - name: 准备 www 目录（网页资源打进 APK）
+        run: |
+          set -e
+          rm -rf www
+          mkdir -p "www/leaflet@1.9.4"
+          cp -f index.html dressup.html manifest.json www/
+          cp -f apple-touch-icon.png favicon.ico favicon-32x32.png icon-192.png icon-512.png www/
+          cp -r css js assets www/
+          cp -r node_modules/leaflet/dist "www/leaflet@1.9.4/dist"
+          test -s www/js/app-01.js
+          test -s www/js/app-07.js
+          test -s www/css/style-01.css
+          test -s www/assets/expressions/01_smile.png
+          test -s www/dressup.html
+          test -s "www/leaflet@1.9.4/dist/leaflet.js"
+          node -e "
+            const c = require('crypto'), f = require('fs');
+            const html = f.readFileSync('www/index.html', 'utf8');
+            for (const p of ['leaflet.js', 'leaflet.css']) {
+              const h = c.createHash('sha256').update(f.readFileSync('www/leaflet@1.9.4/dist/' + p)).digest('base64');
+              if (html.indexOf('sha256-' + h) === -1) {
+                console.log('::warning::leaflet ' + p + ' 的 sha256 与 index.html 中的 integrity 不一致，地图可能加载失败');
+              } else {
+                console.log('leaflet ' + p + ' SRI 校验通过：sha256-' + h);
+              }
+            }
+          "
+          echo '--- www 内容 ---'
+          ls www | head -30
+
+      - name: 生成 Android 工程
+        run: |
+          set -e
+          npx cap add android
+          npx cap sync android
+          test -f android/app/src/main/java/com/rua/phone/MainActivity.java
+
+      - name: 注入原生代码（沉浸式全屏 + 文件导出）
+        run: |
+          set -e
+          APP=android/app/src/main/java/com/rua/phone
+          cp -f android-overlay/java/com/rua/phone/MainActivity.java "$APP/MainActivity.java"
+          cp -f android-overlay/java/com/rua/phone/AndroidFileSaver.java "$APP/AndroidFileSaver.java"
+          cp -f android-overlay/res/values/styles.xml android/app/src/main/res/values/styles.xml
+          grep -q 'class MainActivity extends BridgeActivity' "$APP/MainActivity.java"
+          grep -q 'AndroidFileSaver' "$APP/MainActivity.java"
+          grep -q 'hideSystemUI' "$APP/MainActivity.java"
+          grep -q 'AppTheme.NoActionBar' android/app/src/main/res/values/styles.xml
+          grep -q 'windowFullscreen' android/app/src/main/res/values/styles.xml
+          echo '原生代码注入完成'
+
+      - name: 调整 AndroidManifest
+        run: |
+          set -e
+          M=android/app/src/main/AndroidManifest.xml
+          perl -0pi -e 's|<application\b|<application android:usesCleartextTraffic="true"|' "$M"
+          perl -0pi -e 's|<activity\b|<activity android:windowSoftInputMode="adjustResize"|' "$M"
+          perl -0pi -e 's|</manifest>|    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />\n</manifest>|' "$M"
+          grep -q 'usesCleartextTraffic' "$M"
+          grep -q 'windowSoftInputMode' "$M"
+          grep -q 'WRITE_EXTERNAL_STORAGE' "$M"
+          perl -ne 'print if /usesCleartextTraffic|windowSoftInputMode|<activity |uses-permission/' "$M"
+
+      - name: 替换应用图标
+        run: |
+          set -e
+          for d in android/app/src/main/res/mipmap-*; do
+            if [ -f "$d/ic_launcher.png" ]; then cp -f icon-512.png "$d/ic_launcher.png"; fi
+            if [ -f "$d/ic_launcher_round.png" ]; then cp -f icon-512.png "$d/ic_launcher_round.png"; fi
+          done
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          echo '图标替换完成'
+
+      - name: 编译 Debug APK
+        run: |
+          set -e
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
         with:
-          name: rua-APK
+          name: rua-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

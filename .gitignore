@@ -1,6 +1,7 @@
 node_modules/
 android/
 .capacitor/
+www/
 dist/
 *.apk
 *.aab

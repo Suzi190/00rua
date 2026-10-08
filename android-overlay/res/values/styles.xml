@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 窗口底色：与网页背景一致，避免出现灰色/白色的系统栏区域或启动闪屏 -->
+    <color name="ruaWindowBackground">#FFF5F8</color>
+
+    <!-- 应用主题（AndroidManifest 中 application 的主题） -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/ruaWindowBackground</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- ★ 关键：Capacitor 的 BridgeActivity.onCreate() 里会执行
+             getApplication().setTheme(R.style.AppTheme_NoActionBar);
+             setTheme(R.style.AppTheme_NoActionBar);
+         所以运行期真正生效的是这个主题。之前这里没有定义，就回落到了 capacitor 库里的
+         <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">（深色），
+         于是窗口变深灰、状态栏重新出现 —— 这就是「灰色顶部状态栏」的根因。 -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/ruaWindowBackground</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- 启动主题（Activity 的主题，onCreate 之前就生效）：纯底色，不显示任何闪屏图 -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@color/ruaWindowBackground</item>
+        <item name="android:windowBackground">@color/ruaWindowBackground</item>
+        <item name="windowSplashScreenBackground">@color/ruaWindowBackground</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>
+
+</resources>
