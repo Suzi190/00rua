@@ -1,0 +1,151 @@
+@keyframes rua-spin{to{transform:rotate(360deg);}}
+
+/* ==========================================================================
+   HV2 · 主屏幕固定版式（4 列 × 6 行网格）
+   —— 网格盒 = .home-page 内容盒 295 × 500（327-16×2 / 516-8×2）
+   —— 单元格 ≈ 66.25 × 75，间距 10（与旧 APP 图标列宽一致）
+   —— 所有坐标写在 index.html 的 style="grid-area:..." 里，这里只管样式
+   —— 2026-10 无彩色化：磨砂玻璃不再放大底色（去掉 saturate），所有原粉色点缀
+      （虚线占位 / 占位线 / ✦ / 头像占位 / 投影 / 文字）统一改中性灰白，不再有粉调
+   ========================================================================== */
+.hv2-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(6,1fr);
+  gap:10px;
+  width:100%; height:100%;
+  box-sizing:border-box;
+}
+.hv2-cell{ position:relative; border-radius:16px; }
+
+/* --- 通用照片区：有图铺满 / 无图虚线占位（点一下换图） --- */
+.hv2-photobox{ position:relative; overflow:hidden; border-radius:14px; background:rgba(255,255,255,0.38); cursor:pointer; }
+.hv2-photobox img.hv2-photo-img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit; }
+.hv2-photobox:active{ transform:scale(0.985); transition:transform 0.12s; }
+.hv2-photo-empty{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  color:#9E9E9E; text-align:center; pointer-events:none;
+  border:1.5px dashed rgba(0,0,0,0.13); border-radius:inherit;
+  background:linear-gradient(135deg,rgba(255,255,255,0.55),rgba(255,255,255,0.34));
+}
+.hv2-photo-empty span{ font-size:20px; line-height:1; }
+.hv2-photo-empty i{ font-style:normal; font-size:9px; opacity:0.9; }
+.hv2-photobox[data-img-small] .hv2-photo-empty span{ font-size:14px; }
+.hv2-photobox[data-img-small] .hv2-photo-empty{ gap:0; border-style:solid; border-color:rgba(255,255,255,0.75); }
+
+/* --- 装饰小星星 --- */
+.hv2-spark{ color:#fff; font-size:9px; line-height:1; opacity:0.92; pointer-events:none; text-shadow:0 1px 3px rgba(0,0,0,0.28); }
+.hv2-spark.on-film{ color:rgba(255,255,255,0.85); }
+
+/* --- ① 名片卡 4×2 --- */
+.hv2-card{
+  overflow:visible; box-shadow:0 8px 22px rgba(0,0,0,0.09);
+  container-type:size; /* 头像直径 / 信息条高度按卡片高度等比缩放（同 .hv2-apps 的做法） */
+  --hv2-portrait:min(54px, 78%);  /* 先给不支持容器查询单位的浏览器一个保底值 */
+  --hv2-portrait:min(54px, 32cqh);
+}
+.hv2-card > .hv2-card-bg{ position:absolute; inset:0; border-radius:16px; }
+/* 磨砂玻璃信息条：压在照片底部，半透 + 强模糊；高度 = 半个头像 + 两行文字 + 内边距 */
+.hv2-card-glass{
+  position:absolute; left:0; right:0; bottom:0;
+  height:calc(var(--hv2-portrait) / 2 + 52px);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  gap:2px; padding:0 12px 6px; box-sizing:border-box;
+  border-radius:0 0 16px 16px; cursor:pointer;
+  background:rgba(255,255,255,0.36);
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border-top:1px solid rgba(255,255,255,0.55);
+}
+.hv2-card-glass:active{ background:rgba(255,255,255,0.46); }
+/* 圆形头像：水平居中且上半个压在照片上；点一下＝换图片（hv2RenderProfile 里绑定） */
+.hv2-card-portrait{
+  width:var(--hv2-portrait); height:var(--hv2-portrait); flex:0 0 auto;
+  margin:calc(var(--hv2-portrait) / -2) auto 4px;
+  border-radius:50%; cursor:pointer;
+  display:grid; place-items:center; font-size:18px; font-weight:600; color:#9E9E9E;
+  background:linear-gradient(135deg,#FFFFFF,#ECECEC);
+  background-size:cover; background-position:center;
+  border:2.5px solid rgba(255,255,255,0.9); box-shadow:0 5px 14px rgba(0,0,0,0.12);
+}
+.hv2-card-portrait:active{ transform:scale(0.96); transition:transform 0.12s; }
+.hv2-card-info{ flex:0 0 auto; width:100%; min-width:0; padding:0; text-align:center; }
+.hv2-card-name{ font-size:17px; font-weight:600; color:#4A4A4A; letter-spacing:0.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hv2-card-sub{ font-size:9px; color:#8F8F8F; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* --- ② 拍立得 2×2 --- */
+.hv2-polaroid{ overflow:visible; }
+.hv2-pola{ position:absolute; display:flex; background:#fff; border-radius:5px; box-shadow:0 6px 16px rgba(0,0,0,0.14); }
+.hv2-pola > .hv2-photobox{ flex:1; min-width:0; border-radius:2px; }
+.hv2-pola.p-back{ right:4px; top:6px; width:88px; height:112px; padding:5px 5px 13px; transform:rotate(9deg); z-index:1; }
+.hv2-pola.p-front{ left:8px; bottom:14px; width:100px; height:126px; padding:6px 6px 17px; transform:rotate(-7deg); z-index:2; }
+.hv2-polaroid .hv2-spark{ position:absolute; z-index:3; }
+
+/* --- ③ 应用块（2×2 / 1×1，与旧图标列宽完全对齐） --- */
+/* --hv2-icon-max：图标高度上限，随格子高度自适应，保证图标+名字不越界
+   2 行块：行高 = (100cqh - 10) / 2 → 50cqh - 5px，再留 18px 给名字 */
+.hv2-apps{ display:grid; grid-template-columns:repeat(2,1fr); grid-auto-rows:1fr; gap:10px; align-content:start; container-type:size; --hv2-icon-max:calc(50cqh - 23px); }
+/* 1 行块（单块）：整块高度就是行高 */
+.hv2-apps-single{ grid-template-columns:1fr; --hv2-icon-max:calc(100cqh - 20px); }
+.hv2-apps .app-item{ justify-content:center; overflow:visible; min-height:0; }
+/* 先给不支持容器查询单位的浏览器一个保底值，再用 cqh 精修（正常尺寸下都等于 52px） */
+.hv2-apps .app-icon{ width:min(52px, 78%); height:auto; aspect-ratio:1 / 1; }
+.hv2-apps .app-icon{ width:min(52px, 78%, var(--hv2-icon-max)); }
+
+/* --- ④ 照片 2×2（网页区域本身即照片区） --- */
+.hv2-cell.hv2-photobox{ border-radius:16px; }
+.hv2-cell.hv2-photobox > .hv2-photo-empty{ border-radius:16px; }
+
+/* --- ⑤ 胶片相框 4×2（白色磨砂玻璃框 + 顶部中性灰条 + 三张照片） --- */
+.hv2-film{
+  display:flex; flex-direction:column; gap:8px; padding:10px;
+  border-radius:16px; box-shadow:0 8px 22px rgba(0,0,0,0.09);
+  background:rgba(255,255,255,0.44); /* 与第一页名片玻璃条同款：白色磨砂玻璃（无彩色），不再是深色框 */
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1.5px solid rgba(255,255,255,0.92); /* 白色描边 */
+}
+.hv2-film-bar{ height:7px; width:56%; margin:0 auto; border-radius:4px; background:rgba(0,0,0,0.10); box-shadow:0 1px 3px rgba(0,0,0,0.06); } /* 白条在白底上看不见，改中性灰条（无彩色化） */
+.hv2-film-wins{ flex:1; display:grid; grid-template-columns:repeat(3,1fr); gap:6px; min-height:0; }
+.hv2-film-wins > .hv2-photobox{ border-radius:6px; background:#fff; }
+.hv2-film-wins > .hv2-photobox > .hv2-photo-empty{ border-radius:6px; }
+.hv2-film .hv2-spark{ position:absolute; z-index:2; }
+.hv2-film .hv2-spark.on-film{ color:rgba(0,0,0,0.22); text-shadow:none; } /* 白底上白色 ✦ 会看不见，改中性灰 */
+/* 第二页照片组：外框统一白色（第一页空白时的虚线占位已是中性灰，不再发粉） */
+#appGrid1 .hv2-film-wins > .hv2-photobox{ border:2px solid #fff; }
+#appGrid1 .hv2-photobox > .hv2-photo-empty{ border:1.5px solid #fff; border-radius:inherit; }
+#appGrid1 .hv2-frame{ border:1.5px solid #fff; }
+
+/* --- ⑥ 头像信息组 2×2（圆形头像 + 三行信息） --- */
+.hv2-profile{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; }
+.hv2-profile-avatar{
+  width:64px; height:64px; flex:0 0 64px; border-radius:50%;
+  display:grid; place-items:center; font-size:22px; font-weight:600; color:#9E9E9E;
+  background:linear-gradient(135deg,#FFFFFF,#ECECEC);
+  background-size:cover; background-position:center;
+  border:2.5px solid rgba(255,255,255,0.92); box-shadow:0 6px 16px rgba(0,0,0,0.12);
+}
+.hv2-profile-lines{ width:100%; display:flex; flex-direction:column; align-items:center; gap:6px; padding:0 12px; box-sizing:border-box; }
+.hv2-line{ width:100%; border-radius:6px; background:rgba(0,0,0,0.06); }
+.hv2-line.l1{ height:20px; display:grid; place-items:center; font-size:12px; font-weight:600; color:#4A4A4A; background:rgba(0,0,0,0.08); overflow:hidden; white-space:nowrap; }
+.hv2-line.l2{ height:18px; display:grid; place-items:center; font-size:9px; color:#8F8F8F; background:rgba(0,0,0,0.05); overflow:hidden; white-space:nowrap; padding:0 6px; box-sizing:border-box; }
+.hv2-line.l3{ height:8px; width:56%; background:rgba(0,0,0,0.06); }
+
+/* --- ⑦ 便签 1×4 --- */
+.hv2-note{
+  display:flex; align-items:center; gap:10px; padding:0 14px; cursor:pointer;
+  border-radius:16px; border:1.5px dashed rgba(0,0,0,0.13);
+  background:rgba(255,255,255,0.5);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+}
+.hv2-note:active{ transform:scale(0.99); }
+.hv2-note .hv2-spark{ color:rgba(0,0,0,0.22); text-shadow:none; font-size:10px; }
+.hv2-note-text{ flex:1; min-width:0; text-align:center; font-size:12px; color:#8F8F8F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* --- ⑧ 相框 2×1（白色卡纸 + 下方投影） --- */
+.hv2-frame{ padding:4px; background:rgba(255,255,255,0.72); border-radius:14px; box-shadow:0 4px 0 rgba(0,0,0,0.06), 0 8px 16px rgba(0,0,0,0.10); }
+.hv2-frame > .hv2-photobox{ width:100%; height:100%; border-radius:10px; }
+
+/* --- ⑨ Dock 收窄（固定 4 个应用） --- */
+.dock.hv2-dock{ margin:0 20px 4px; padding:7px 8px; border-radius:24px; }
+.dock.hv2-dock .dock-item{ max-width:62px; }
+.dock.hv2-dock .dock-icon{ width:46px; height:46px; border-radius:12px; font-size:20px; }
+.dock.hv2-dock .dock-name{ font-size:9px; }

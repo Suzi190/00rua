@@ -1,0 +1,9 @@
+{
+  "name": "rua-phone",
+  "version": "1.0.0",
+  "description": "rua小手机",
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/android": "^6.0.0"
+  }
+}
