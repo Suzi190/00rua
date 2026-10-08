@@ -1565,9 +1565,16 @@
     document.body.style.position = 'fixed';
     document.body.style.top = '-' + _waSavedScrollY + 'px';
     document.body.style.width = '100%';
-    // Move overlay to body to prevent iOS keyboard push (phoneScreen transform breaks fixed positioning inside it)
-    if (o.parentNode && o.parentNode !== document.body) { document.body.appendChild(o); }
-    o.style.position = 'fixed';
+    /* ★ 浮层必须留在 #phoneScreen 内部（由样式表 #waAuthOverlay{position:absolute;inset:0;z-index:9000} 铺满手机框）。
+       绝不能挪到 document.body：真机/窄屏会命中
+         @media (max-width:768px) 和 @media (hover:none) and (pointer:coarse)，
+         把 .phone-frame 变成 position:fixed + z-index:9998 !important；
+       浮层一旦被挪到 body，它自己只有 z-index:9000，会被手机框永久盖住（同为根层叠上下文才比大小）。
+       现象：点微信完全没反应、不报错、没有任何提示——登录页其实已经打开，只是被盖住看不见。
+       键盘顶起已由上面的 body{position:fixed;top:-scrollY} 处理，无需把浮层移出手机框。 */
+    var _waHost = document.getElementById('phoneScreen') || document.body;
+    if (o.parentNode !== _waHost) { _waHost.appendChild(o); }
+    o.style.position = '';
     renderAuth();
   }
   WA.openAuth = openAuth; window.waOpenAuth = openAuth;

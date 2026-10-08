@@ -63,6 +63,32 @@ jobs:
           test -s www/js/rua-diag.js
           test -s www/css/style-01.css
           grep -q 'js/rua-diag.js' www/index.html
+          # ⚠ 防回归自检：登录浮层必须留在 #phoneScreen 内部。
+          # 真机（APK/窄屏/触摸设备）命中 @media (max-width:768px) 与 (hover:none) and (pointer:coarse)，
+          # 会把 .phone-frame 变成 position:fixed + z-index:9998 !important；浮层一旦被挪到 document.body，
+          # 自身 z-index:9000 就会被手机框永久盖住 —— 现象是「点微信完全没反应、不报错、无提示」。
+          node -e "
+            const fs = require('fs');
+            const wa = fs.readFileSync('www/js/world-accounts.js', 'utf8');
+            const i = wa.indexOf('function openAuth(');
+            const j = wa.indexOf('WA.openAuth = openAuth');
+            if (i < 0 || j < i) {
+              console.log('::warning::world-accounts.js 里找不到 openAuth 的边界，请人工确认登录浮层没有被挪出手机框');
+            } else {
+              const body = wa.slice(i, j);
+              if (/document\.body\.appendChild\(o\)/.test(body)) {
+                console.error('::error::openAuth 又把登录浮层挪到 document.body 了：真机上会被 .phone-frame(z-index:9998) 盖住，表现成「点微信没反应」');
+                process.exit(1);
+              }
+              console.log('登录浮层位置自检通过：浮层留在手机框内 ✓');
+            }
+            const css = fs.readFileSync('www/css/style-01.css', 'utf8');
+            const m = css.match(/\.toast\s*\{[^}]*z-index:(\d+)/);
+            if (!m) console.log('::warning::没解析到 .toast 的 z-index，请确认 toast 的层级');
+            else if (Number(m[1]) < 9000) console.log('::warning::.toast 的 z-index=' + m[1] + ' 低于登录浮层(9000)，登录页上的提示可能被遮住');
+            else console.log('.toast z-index=' + m[1] + ' 高于应用内浮层 ✓');
+          "
+
           test -s www/assets/expressions/01_smile.png
           test -s www/dressup.html
           test -s "www/leaflet@1.9.4/dist/leaflet.js"
@@ -221,7 +247,10 @@ jobs:
           1. 如果手机里已经装过旧版本（调试签名），必须先卸载旧版再安装；
           2. 安装时允许「未知来源」；vivo/OPPO 若仍拦截，可临时关闭「纯净模式 / 安全安装」；
           3. 装完打开后：屏幕从最顶端就铺满（顶部不再有状态栏高度的色带），导出文件会保存到系统「下载」目录；
-          4. 排查用：屏幕最顶部连点 5 下（或地址后加 ?diag=1）会弹出「真机自检」面板，一键验证全屏与文件导出。"
+          4. 排查用：屏幕最顶部连点 5 下（或地址后加 ?diag=1）会弹出「真机自检」面板，一键验证全屏与文件导出；
+          5. 本次修复：真机上首次打开、未登录时点「微信」没反应（登录浮层被手机框盖住，登录页其实已打开但看不见），
+             以及登录页上「密码错误」这类提示被浮层遮住的问题；被吞掉的异常现在都会记进「设置 → 问题诊断」，
+             遇到异常请到该处点「全部复制」把日志发给开发者。"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "rua小手机 APK（最新正式签名版 ${VERSION}）" --notes "$NOTES"
           else

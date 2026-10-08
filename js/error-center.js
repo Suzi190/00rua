@@ -365,11 +365,57 @@
     } catch (e) {}
   }
 
+  /* ---------- 控制台兜底：把「只 console 一声就被吞掉」的异常也记进日志 ----------
+     背景：openApp / 各渲染函数大量 try-catch 里只写了 console.error，手机上看不到控制台，
+     于是出现“点了没反应、日志里也什么都没有”的无法取证情况。这里接管 console.error
+     （以及带 Error 对象的 console.warn）自动入档。带 _inHook 重入锁，日志本身绝不会再触发记录。 */
+  var _inHook = false;
+  var _warnDedup = {};
+  function consoleMsgOf(args) {
+    var parts = [], errObj = null;
+    for (var i = 0; i < args.length; i++) {
+      var a = args[i];
+      if (a instanceof Error) { if (!errObj) errObj = a; parts.push(a.message || String(a)); }
+      else if (a && typeof a === 'object') { try { parts.push(JSON.stringify(a)); } catch (e) { parts.push(safeStr(a)); } }
+      else parts.push(safeStr(a));
+    }
+    return { msg: parts.join(' ').replace(/\s+/g, ' ').slice(0, 300), err: errObj };
+  }
+  function hookConsole(level, args) {
+    if (_inHook) return;                                  // 重入保护：报错中心自己打的日志不再入档
+    _inHook = true;
+    try {
+      var got = consoleMsgOf(args), msg = got.msg;
+      if (!msg) return;
+      // 已有专门通道的，不重复记录（全局错误、报错中心自身的输出、真机自检）
+      if (/^(?:\[全局错误\]|全局错误|\[错误中心|\[RuaErrorCenter|\[rua-diag\])/.test(msg)) return;
+      if (level === 'warn') {
+        // warn 数量很大（通话降级/摄像头回退等），只在带 Error 对象时记录，且 60 秒内同文去重，
+        // 避免把真正有价值的错误从最近 50 条里挤出去。重要的 warn 请直接用 RuaErrorCenter.report 上报。
+        if (!got.err) return;
+        var t = nowTs(), wk = 'cw:' + msg;
+        if (_warnDedup[wk] && t - _warnDedup[wk] < 60000) return;
+        _warnDedup[wk] = t;
+      } else if (isDup('ce:' + msg)) return;
+      reportError(got.err || new Error(msg), { context: 'console.' + level, silent: true });
+    } catch (e) {} finally { _inHook = false; }
+  }
+  function bootConsoleHook() {
+    try {
+      if (console.__ruaHooked) return;
+      var origError = console.error.bind(console), origWarn = console.warn.bind(console);
+      console.error = function () { try { hookConsole('error', arguments); } catch (e) {} return origError.apply(null, arguments); };
+      console.warn = function () { try { hookConsole('warn', arguments); } catch (e) {} return origWarn.apply(null, arguments); };
+      console.__ruaHooked = true;
+    } catch (e) {}
+  }
+
   /* ---------- 安装 ---------- */
   function install() {
     ensureDom();
     loadLogs();
     bootGlobalCatch();
+    bootConsoleHook();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
   else install();

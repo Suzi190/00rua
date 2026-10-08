@@ -1378,6 +1378,18 @@ function emergencyResetCss() {
 // ===== 视图导航 =====
 const viewStack = ['view-home'];
 
+/* 轻量上报：把以往「只 console.warn 一声就被吞掉」的异常记进「设置 → 问题诊断」。
+   背景：真机上点微信没反应时，手机看不到控制台，等于零线索；这里保证任何异常都留痕。 */
+function reportSoftError(err, context) {
+  try { console.warn('[' + context + ']', err); } catch (e) {}
+  try {
+    if (window.RuaErrorCenter && typeof window.RuaErrorCenter.report === 'function') {
+      var _e = (err instanceof Error) ? err : new Error(String((err && err.message) || err || '未知错误'));
+      window.RuaErrorCenter.report(_e, { context: context, silent: true });
+    }
+  } catch (e) {}
+}
+
 function openApp(app) {
   try {
   if (app === 'wechat') {
@@ -1385,11 +1397,16 @@ function openApp(app) {
     try {
       if (typeof waSession === 'function') {
         var _waSn = waSession();
-        if (!_waSn || !_waSn.kind || !_waSn.refId) { if (typeof waOpenAuth === 'function') waOpenAuth(); return; }
+        if (!_waSn || !_waSn.kind || !_waSn.refId) {
+          // 未登录必须弹出登录浮层；若登录模块没加载成功就明确提示，绝不静默 return（那会表现为“点了没反应”）
+          if (typeof waOpenAuth === 'function') waOpenAuth();
+          else { reportSoftError(new Error('waOpenAuth 未定义：登录页模块(js/world-accounts.js)没有加载成功'), 'openApp(wechat) 登录门'); showToast('登录页模块未加载，请重启 App'); }
+          return;
+        }
         // V2：无论用户账号还是角色账号，都恢复到对应身份的运行时后进入 view-wechat（不再另开角色界面）
-        try { if (typeof waResumeRuntime === 'function') waResumeRuntime(); } catch (waResumeErr) { console.warn('[WA] 身份恢复异常', waResumeErr); }
+        try { if (typeof waResumeRuntime === 'function') waResumeRuntime(); } catch (waResumeErr) { reportSoftError(waResumeErr, 'openApp(wechat) 身份恢复'); }
       }
-    } catch (waGateErr) { console.warn('[WA] 登录门异常', waGateErr); }
+    } catch (waGateErr) { reportSoftError(waGateErr, 'openApp(wechat) 登录门'); }
     navigateTo('view-wechat');
     config.unreadCount = 0;
     try { persistConfigThrottled(); } catch(e) { Store.set('config', config); }
@@ -1473,8 +1490,8 @@ function openApp(app) {
     openDressupApp();
   }
   } catch(e) {
-    console.error('openApp("' + app + '") error:', e);
-    showToast('打开失败: ' + e.message);
+    reportSoftError(e, 'openApp("' + app + '")');
+    showToast('打开失败: ' + (e && e.message ? e.message : e));
   }
 }
 
@@ -3294,7 +3311,10 @@ function _updateViewContainerZ(viewId) {
 function navigateTo(viewId) {
   const current = document.querySelector('.view.active');
   const next = document.getElementById(viewId);
-  if (!next || current === next) return;
+  if (!next || current === next) {
+    if (!next) reportSoftError(new Error('找不到视图容器: ' + viewId), 'navigateTo');
+    return;
+  }
   // 先把目标视图无动画地放到右侧起始位，避免从 prev 位置跳变
   next.classList.remove('prev', 'next', 'active');
   next.style.transition = 'none';
