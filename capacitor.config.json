@@ -1,5 +1,5 @@
 {
   "appId": "com.rua.phone",
   "appName": "rua小手机",
-  "webDir": "."
+  "webDir": "www"
 }

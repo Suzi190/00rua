@@ -27,9 +27,15 @@ jobs:
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
 
+      - name: 准备www目录
+        run: |
+          mkdir -p www
+          cp -r js css *.html *.json *.png *.ico *.webmanifest www/ 2>/dev/null || true
+          cp manifest.json www/ 2>/dev/null || true
+
       - run: npm install
 
-      - run: npx cap init "rua小手机" "com.rua.phone" --web-dir=.
+      - run: npx cap init "rua小手机" "com.rua.phone" --web-dir=www
 
       - run: npx cap add android
 
