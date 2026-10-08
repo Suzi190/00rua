@@ -1,0 +1,55 @@
+// ============================================================================
+// rua小手机 —— 正式（release）签名配置
+// 由 .github/workflows/build-apk.yml 追加到「npx cap add android」生成的
+// android/app/build.gradle 末尾（Gradle Groovy DSL 允许在此再次打开 android {} 块）。
+//
+// 为什么要这一段：
+//   1) 用正式密钥签名，而不是 Android 自动生成的调试密钥 —— vivo / OPPO 等国产 ROM
+//      的安装器会把调试签名判成「安装包缺乏开发者证书」。
+//   2) 显式开启 v1(JAR) + v2 + v3 三种签名方案 —— 部分 ROM 只校验 v1 签名，
+//      只有 v2/v3 的包会被判为「软件包似乎无效」。
+//   3) release 包 debuggable=false，避免被系统安全策略拦截。
+//
+// 密钥来源：android-overlay/signing/rua-release.jks（CI 会复制到 android/app/），
+//           详见 android-overlay/signing/README.md。仓库公开，此密钥仅用于个人侧载。
+// ============================================================================
+android {
+    signingConfigs {
+        release {
+            storeFile file("rua-release.jks")
+            storePassword "rua2026apk"
+            keyAlias "rua"
+            keyPassword "rua2026apk"
+            // AGP 8 的写法（旧写法 v1SigningEnabled/isV1SigningEnabled 已废弃）。
+            // 属性为 Boolean?，null 表示用默认值；这里全部显式打开，避免默认值变化导致漏签名。
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+    }
+
+    // 版本号：这里只是「本地构建（不走 CI）」时的默认值。
+    // CI 会用 package.json 的 version 覆盖 versionName，并把 versionCode 换算成
+    // major*10000 + minor*100 + patch（1.0.1 -> 10001）。
+    // => 以后升级版本只需要改 package.json 一处。
+    defaultConfig {
+        versionCode 10001
+        versionName "1.0.1"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            // minifyEnabled=false（不跑 R8，保留可读堆栈）→ proguardFiles 无需再设
+            minifyEnabled false
+            shrinkResources false
+            debuggable false
+        }
+    }
+
+    // 防止 lintVitalRelease 意外挡住原本能编过的 release 包
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}

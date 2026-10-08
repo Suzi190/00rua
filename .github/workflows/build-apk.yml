@@ -9,7 +9,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # 需要 write 才能在最后一步把 APK 发布到 Release（仅用内置的 GITHUB_TOKEN）
+  contents: write
 
 jobs:
   build:
@@ -121,16 +122,105 @@ jobs:
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
           echo '图标替换完成'
 
-      - name: 编译 Debug APK
+      - name: 注入正式签名配置
+        run: |
+          set -e
+          # 版本号以 package.json 为唯一来源（改版本只改这一处）：
+          #   versionName = package.json 的 version
+          #   versionCode = major*10000 + minor*100 + patch（1.0.1 -> 10001）
+          VERSION="$(node -p "require('./package.json').version")"
+          VCODE="$(node -e "const v=require('./package.json').version.split('.').map(Number);process.stdout.write(String(v[0]*10000+v[1]*100+v[2]))")"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "本次版本：versionName=$VERSION  versionCode=$VCODE"
+          cp -f android-overlay/signing/rua-release.jks android/app/rua-release.jks
+          test -s android/app/rua-release.jks
+          cat android-overlay/gradle/rua-signing.gradle >> android/app/build.gradle
+          # Capacitor 模板里原有的 versionName/versionCode 和 fragment 里的默认值一起覆盖
+          VER="$VERSION" perl -pi -e 's/versionName "[^"]+"/versionName "$ENV{VER}"/' android/app/build.gradle
+          VC="$VCODE" perl -pi -e 's/versionCode \d+/versionCode $ENV{VC}/' android/app/build.gradle
+          grep -q 'signingConfigs' android/app/build.gradle
+          grep -q 'signingConfig signingConfigs.release' android/app/build.gradle
+          grep -q 'enableV1Signing = true' android/app/build.gradle
+          grep -q 'debuggable false' android/app/build.gradle
+          grep -q "versionName \"$VERSION\"" android/app/build.gradle
+          grep -q "versionCode $VCODE" android/app/build.gradle
+          echo '--- build.gradle 关键行 ---'
+          grep -nE 'signingConfig|enableV[123]Signing|debuggable|versionName|versionCode|storeFile' android/app/build.gradle
+          echo '--- 密钥信息（应显示 CN=rua）---'
+          "$JAVA_HOME/bin/keytool" -list -v -keystore android/app/rua-release.jks -storepass rua2026apk | grep -iE 'alias|SHA256|valid|别名|指纹' || true
+          echo '正式签名配置注入完成'
+
+      - name: 编译 Release APK（正式签名）
         run: |
           set -e
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleRelease --stacktrace
 
-      - name: 上传 APK
+      - name: 校验签名（要求 v1 + v2 + v3）
+        run: |
+          set -e
+          OUT_DIR=android/app/build/outputs/apk/release
+          APK="$OUT_DIR/app-release.apk"
+          test -s "$APK"
+          if [ -f "$OUT_DIR/app-release-unsigned.apk" ]; then
+            echo '::error::生成了 app-release-unsigned.apk —— 签名配置没有生效'
+            exit 1
+          fi
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/*/ 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$BT" ]; then
+            echo '::error::找不到 build-tools / apksigner'
+            ls "$ANDROID_HOME" || true
+            exit 1
+          fi
+          echo "使用 apksigner：${BT}apksigner"
+          LOG="$RUNNER_TEMP/apksigner-verify.txt"
+          "$BT"apksigner verify --verbose --print-certs "$APK" > "$LOG" 2>&1 || true
+          cat "$LOG"
+          grep -qE '^(Verifies|Verified)$' "$LOG" || { echo '::error::APK 签名校验未通过'; exit 1; }
+          grep -q 'Verified using v1 scheme (JAR signing): true' "$LOG" || { echo '::error::缺少 v1(JAR) 签名，vivo/OPPO 会提示「安装包缺乏开发者证书」'; exit 1; }
+          grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' "$LOG" || { echo '::error::缺少 v2 签名'; exit 1; }
+          grep -q 'Verified using v3 scheme (APK Signature Scheme v3): true' "$LOG" || echo '::warning::没有 v3 签名（Android 9 及以上仍可安装）'
+          grep -qi 'certificate DN: CN=rua' "$LOG" || echo '::warning::证书 DN 里没有 CN=rua，确认密钥是否被改动'
+          ls -l "$APK"
+          sha256sum "$APK"
+          VERSION="${VERSION:-$(node -p "require('./package.json').version")}"
+          NAMED="$OUT_DIR/rua-xiaoshouji-${VERSION}-release.apk"
+          cp -f "$APK" "$NAMED"
+          echo "带版本号的产物：$NAMED"
+          echo '签名校验通过：v1(JAR) + v2 (+v3)，证书 CN=rua'
+          echo '注意：旧版本是调试签名，装新包前必须先卸载旧版（签名不同不能覆盖安装）'
+
+      - name: 上传 APK（构建产物）
         uses: actions/upload-artifact@v4
         with:
-          name: rua-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: rua-apk-release
+          path: android/app/build/outputs/apk/release/rua-xiaoshouji-*-release.apk
           if-no-files-found: error
+
+      - name: 发布到 Release（失败不影响构建结果）
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          VERSION="${VERSION:-$(node -p "require('./package.json').version")}"
+          APK="$(ls android/app/build/outputs/apk/release/rua-xiaoshouji-*-release.apk)"
+          echo "准备发布：$APK"
+          TAG=rua-latest
+          NOTES="rua小手机 ${VERSION} 正式签名版（v1 + v2 + v3 三种签名，可直接安装）
+
+          下载：只下载本页的 .apk 文件，不要下载 zip 再改名（改名后的包部分 ROM 会拒绝）。
+
+          安装提示：
+          1. 如果手机里已经装过旧版本（调试签名），必须先卸载旧版再安装；
+          2. 安装时允许「未知来源」；vivo/OPPO 若仍拦截，可临时关闭「纯净模式 / 安全安装」；
+          3. 装完打开后：顶部没有灰色状态栏（沉浸式全屏），导出文件会保存到系统「下载」目录。"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "rua小手机 APK（最新正式签名版 ${VERSION}）" --notes "$NOTES"
+          else
+            gh release create "$TAG" --target main --title "rua小手机 APK（最新正式签名版 ${VERSION}）" --notes "$NOTES"
+          fi
+          gh release upload "$TAG" "$APK" --clobber
+          echo "Release 已更新：https://github.com/${{ github.repository }}/releases/tag/$TAG"
+
