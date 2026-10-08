@@ -116,6 +116,32 @@
     L.push('saveBase64File= ' + (window.AndroidFileSaver ? typeof window.AndroidFileSaver.saveBase64File : '无此对象'));
 
     L.push('');
+    L.push('== 日间/夜间主题样式 ==');
+    var tls = window.__ruaThemeLightState;
+    L.push('主题状态 = ' + (tls ? (tls.light ? '日间' : '夜间') : '未初始化（app 还没跑到 applyTheme）'));
+    if (tls) {
+      L.push('样式地址 = ' + tls.href);
+      L.push('样式表加载 = ' + (tls.light
+        ? (tls.loaded ? '✅ 已加载' : (tls.failed ? '❌ 加载失败(404/文件缺失) —— 日间会完全不生效' : '…未确认(可能还在加载)'))
+        : '—（夜间不加载）'));
+    }
+    var tlLink = document.getElementById('themeLightLink');
+    L.push('link#themeLightLink = ' + (tlLink ? '存在' : '不存在'));
+    if (tlLink) {
+      var tlOk = false;
+      try { tlOk = !!tlLink.sheet; } catch (e) {}
+      L.push('  link.sheet = ' + (tlOk ? '已生效' : '空（样式没挂上，日间就一直是夜间）'));
+    }
+    /* 实测：日间应该把这些值算成浅色，夜间是深色 —— 一眼能看出主题到底有没有生效 */
+    var vwEl = document.getElementById('view-wechat');
+    if (vwEl) {
+      L.push('#view-wechat class = ' + vwEl.className);
+      L.push('#view-wechat 背景 = ' + window.getComputedStyle(vwEl).backgroundColor + '（日间应为 rgb(237, 237, 237)）');
+    }
+    var lblEl = document.querySelector('.wx-m-label');
+    if (lblEl) L.push('.wx-m-label 文字色 = ' + window.getComputedStyle(lblEl).color + '（日间应为 rgb(25, 25, 25)）');
+
+    L.push('');
     L.push('== 其他 ==');
     L.push('display-mode standalone=' + (window.matchMedia
       ? window.matchMedia('(display-mode: standalone)').matches : '-')

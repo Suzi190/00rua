@@ -62,6 +62,37 @@ jobs:
           test -s www/js/app-07.js
           test -s www/js/rua-diag.js
           test -s www/css/style-01.css
+          test -s www/css/theme-light.css
+          # ⚠ 防回归自检：JS 里动态加载的样式文件必须真的存在且被打进 www/。
+          # 日间主题就是靠 applyTheme() 动态插入 css/theme-light.css 实现的：这个文件一旦缺失
+          # 或为空，浏览器只发 error、不报错也不提示，「点了日间却一直是夜间」完全静默无痕。
+          node -e "
+            const fs = require('fs');
+            const files = ['www/js/app-02.js','www/js/app-06.js','www/js/app-07.js','www/js/world-accounts.js','www/js/rua-diag.js'];
+            let bad = 0;
+            for (const f of files) {
+              if (!fs.existsSync(f)) {
+                /* 源文件在、打包产物不在 → 也是漏打包；两边都没有才算这个文件本来就不存在 */
+                const src = f.replace(/^www\//, '');
+                if (fs.existsSync(src)) { console.error('::error::' + src + ' 存在，但没有被打进 ' + f); bad++; }
+                else console.log('跳过（仓库里没有 ' + src + '）');
+                continue;
+              }
+              const src = fs.readFileSync(f, 'utf8');
+              const hit = Array.from(new Set(src.match(/css\/[A-Za-z0-9_.-]+\.css/g) || []));
+              for (const m of hit) {
+                const p = 'www/' + m;
+                if (!fs.existsSync(p) || fs.statSync(p).size === 0) {
+                  console.error('::error::' + f + ' 动态引用了 ' + m + '，但 ' + p + ' 不存在或为空 —— 该功能会静默失效（日间主题就是这样丢的）');
+                  bad++;
+                } else {
+                  console.log('动态样式已打包：' + f + ' → ' + m);
+                }
+              }
+            }
+            if (bad) process.exit(1);
+            console.log('动态加载样式自检通过 ✓');
+          "
           grep -q 'js/rua-diag.js' www/index.html
           # ⚠ 防回归自检：登录浮层必须留在 #phoneScreen 内部。
           # 真机（APK/窄屏/触摸设备）命中 @media (max-width:768px) 与 (hover:none) and (pointer:coarse)，
@@ -250,7 +281,12 @@ jobs:
           4. 排查用：屏幕最顶部连点 5 下（或地址后加 ?diag=1）会弹出「真机自检」面板，一键验证全屏与文件导出；
           5. 本次修复：真机上首次打开、未登录时点「微信」没反应（登录浮层被手机框盖住，登录页其实已打开但看不见），
              以及登录页上「密码错误」这类提示被浮层遮住的问题；被吞掉的异常现在都会记进「设置 → 问题诊断」，
-             遇到异常请到该处点「全部复制」把日志发给开发者。"
+             遇到异常请到该处点「全部复制」把日志发给开发者。
+          6. 本次修复：日间 / 夜间模式切换失效（一直停在夜间、换不回日间）—— 原因是日间样式文件
+             css/theme-light.css 在安装包里是缺的（WebView 里等于 404），点「日间」什么都没发生
+             也不报错；现在该文件随包发布，并补上了失败提示与自检（「设置 → 问题诊断」里能看到
+             主题样式是否加载成功），同时补齐了 6 个微信主屏（微信 / 通讯录 / 发现 / 我 / 朋友圈 / 聊天）
+             的日间配色（白色列表、白泡泡黑字、浅色输入栏与面板）。"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "rua小手机 APK（最新正式签名版 ${VERSION}）" --notes "$NOTES"
           else

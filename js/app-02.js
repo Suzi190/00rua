@@ -2320,6 +2320,8 @@ function ensureWxThemeObserver() {
     mo.observe(root, { childList: true, subtree: true });
   } catch (e) {}
 }
+/* 日间覆盖样式（唯一来源）：改动 css/theme-light.css 后请顺手更新这里的 ?v=，避免 WebView 用到缓存的旧版 */
+var WX_THEME_LIGHT_CSS = 'css/theme-light.css?v=20261008light';
 function applyTheme() {
   try {
     var light = isLightTheme();
@@ -2329,12 +2331,29 @@ function applyTheme() {
         link = document.createElement('link');
         link.id = 'themeLightLink';
         link.rel = 'stylesheet';
-        link.href = 'css/theme-light.css?v=20261007white';
+        link.href = WX_THEME_LIGHT_CSS;
         document.head.appendChild(link);
-        if (link.addEventListener) link.addEventListener('load', function () { moveCustomCssToEnd(); });
+        if (link.addEventListener) {
+          link.addEventListener('load', function () {
+            window.__ruaThemeLightState = { light: true, href: WX_THEME_LIGHT_CSS, loaded: true, failed: false };
+            moveCustomCssToEnd();
+          });
+          /* 样式文件缺失（打包漏文件 → 404）时浏览器只触发 error、不触发 load。
+             没有这一步，「点了日间却一直是夜间」是完全静默无痕的；这里把失败
+             记进「设置 → 问题诊断」并弹提示，真机上一眼能看出是缺文件。 */
+          link.addEventListener('error', function () {
+            window.__ruaThemeLightState = { light: true, href: WX_THEME_LIGHT_CSS, loaded: false, failed: true };
+            if (typeof reportSoftError === 'function') {
+              reportSoftError(new Error('日间样式加载失败（404 / 打包缺少 ' + WX_THEME_LIGHT_CSS + '）'), '主题-日间样式');
+            }
+            if (typeof showToast === 'function') showToast('日间样式加载失败：安装包缺少 theme-light.css');
+          });
+        }
+        window.__ruaThemeLightState = { light: true, href: WX_THEME_LIGHT_CSS, loaded: !!link.sheet, failed: false };
       }
     } else {
       if (link) link.remove();
+      window.__ruaThemeLightState = { light: false, href: WX_THEME_LIGHT_CSS, loaded: false, failed: false };
     }
     /* 日间 class 只加到微信域视图，绝不再挂 body（避免其他 APP 被日间样式波及） */
     document.body.classList.remove('theme-light');
@@ -2547,7 +2566,7 @@ function showMomentActionMenu(idx, e) {
   if (!menu) {
     const m = document.createElement('div');
     m.id = 'momentActionMenu';
-    m.className = 'wx-moment-action-menu';
+    m.className = 'wx-moment-action-menu' + ((typeof isLightTheme === 'function' && isLightTheme()) ? ' theme-light' : '');
     m.innerHTML = `<div class="item" onclick="toggleMomentLike(currentMomentIdx)">点赞</div>
       <div class="item" onclick="showMomentCommentInput(currentMomentIdx)">评论</div>
       <div class="item" onclick="deleteMoment(currentMomentIdx)" style="color:#FF3B30">删除</div>`;
@@ -2600,7 +2619,7 @@ function showMomentCommentInput(idx, replyTo) {
   // 创建输入栏
   const bar = document.createElement('div');
   bar.id = 'momentCommentBar';
-  bar.className = 'wx-moment-comment-input-bar';
+  bar.className = 'wx-moment-comment-input-bar' + ((typeof isLightTheme === 'function' && isLightTheme()) ? ' theme-light' : '');
   const placeholder = replyTo ? '回复 ' + replyTo + '...' : '评论...';
   bar.innerHTML = `<input type="text" id="momentCommentInput" placeholder="${escapeHtml(placeholder)}" />
     <button class="cancel-btn" onclick="closeMomentCommentInput()">取消</button>
@@ -2727,7 +2746,7 @@ function momentRoleAction(name, type, idx) {
     if (existing) existing.remove();
     const bar = document.createElement('div');
     bar.id = 'momentCommentBar';
-    bar.className = 'wx-moment-comment-input-bar';
+    bar.className = 'wx-moment-comment-input-bar' + ((typeof isLightTheme === 'function' && isLightTheme()) ? ' theme-light' : '');
     bar.innerHTML = `<input type="text" id="momentCommentInput-2" placeholder="以${escapeHtml(name)}的身份评论..." />
       <button class="cancel-btn" onclick="closeMomentCommentInput()">取消</button>
       <button onclick="submitMomentComment()">发送</button>`;
@@ -28591,6 +28610,9 @@ function showMsgActionMenu(e) {
   if (y > rect.height - 100) y = rect.height - 100;
   menu.style.left = x + 'px';
   menu.style.top = y + 'px';
+  /* 长按菜单挂在 .phone-screen 上（不在微信视图里面），拿不到视图的 .theme-light，
+     日间下要单独补一个，否则白色界面里会弹出一块深灰菜单 */
+  try { menu.classList.toggle('theme-light', (typeof isLightTheme === 'function') && isLightTheme()); } catch (e) {}
   menu.classList.add('show');
 }
 
