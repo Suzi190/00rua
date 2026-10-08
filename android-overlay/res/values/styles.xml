@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- 窗口底色：与网页背景一致，避免出现灰色/白色的系统栏区域或启动闪屏 -->
+    <!-- 窗口底色：与网页背景一致，避免启动闪屏和系统栏区域出现异色。
+         正常情况下网页内容已铺满整屏（见 MainActivity.applyEdgeToEdge），这里只是兜底
+         （启动瞬间、以及极少数机型上系统栏区域真的露出来时用的颜色）。 -->
     <color name="ruaWindowBackground">#FFF5F8</color>
 
     <!-- 应用主题（AndroidManifest 中 application 的主题） -->
@@ -22,6 +24,15 @@
          所以运行期真正生效的是这个主题。之前这里没有定义，就回落到了 capacitor 库里的
          <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">（深色），
          于是窗口变深灰、状态栏重新出现 —— 这就是「灰色顶部状态栏」的根因。 -->
+
+    <!-- 上面这个主题里的 item 只负责「窗口底色 + 系统栏透明」，不能保证内容真铺满。
+         ★ 真正让网页内容铺到屏幕最顶端（顶部不再出现状态栏高度的色带）的是
+           MainActivity.applyEdgeToEdge()：Android 11(API 30) 及以上必须调用
+           window.setDecorFitsSystemWindows(false)，否则 PhoneWindow 的
+           sDefaultContentInsetsApplier 会把状态栏高度作为内容 inset，顶部就会露出一条窗口底色。
+           android:windowFullscreen 在 API 30+ 已被系统忽略（仅对旧系统有效），不要依赖它。
+           详见 MainActivity 的类注释（含 AOSP 源码出处）。 -->
+
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

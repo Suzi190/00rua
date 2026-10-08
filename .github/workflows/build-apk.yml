@@ -60,7 +60,9 @@ jobs:
           cp -r node_modules/leaflet/dist "www/leaflet@1.9.4/dist"
           test -s www/js/app-01.js
           test -s www/js/app-07.js
+          test -s www/js/rua-diag.js
           test -s www/css/style-01.css
+          grep -q 'js/rua-diag.js' www/index.html
           test -s www/assets/expressions/01_smile.png
           test -s www/dressup.html
           test -s "www/leaflet@1.9.4/dist/leaflet.js"
@@ -96,6 +98,9 @@ jobs:
           grep -q 'class MainActivity extends BridgeActivity' "$APP/MainActivity.java"
           grep -q 'AndroidFileSaver' "$APP/MainActivity.java"
           grep -q 'hideSystemUI' "$APP/MainActivity.java"
+          grep -q 'applyEdgeToEdge' "$APP/MainActivity.java"
+          grep -q 'setDecorFitsSystemWindows' "$APP/MainActivity.java"
+          grep -q 'WindowInsets.Type.ime()' "$APP/MainActivity.java"
           grep -q 'AppTheme.NoActionBar' android/app/src/main/res/values/styles.xml
           grep -q 'windowFullscreen' android/app/src/main/res/values/styles.xml
           echo '原生代码注入完成'
@@ -215,7 +220,8 @@ jobs:
           安装提示：
           1. 如果手机里已经装过旧版本（调试签名），必须先卸载旧版再安装；
           2. 安装时允许「未知来源」；vivo/OPPO 若仍拦截，可临时关闭「纯净模式 / 安全安装」；
-          3. 装完打开后：顶部没有灰色状态栏（沉浸式全屏），导出文件会保存到系统「下载」目录。"
+          3. 装完打开后：屏幕从最顶端就铺满（顶部不再有状态栏高度的色带），导出文件会保存到系统「下载」目录；
+          4. 排查用：屏幕最顶部连点 5 下（或地址后加 ?diag=1）会弹出「真机自检」面板，一键验证全屏与文件导出。"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "rua小手机 APK（最新正式签名版 ${VERSION}）" --notes "$NOTES"
           else
