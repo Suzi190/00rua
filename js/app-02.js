@@ -25738,13 +25738,32 @@ async function exportData() {
 
   const date = new Date().toISOString().slice(0,10);
   const filename = 'rua小手机-backup-' + date + '.json';
-  // APK mode: use native Android interface
+  // APK / Capacitor 模式：优先用系统分享
   if (window.AndroidFileSaver) {
     window.AndroidFileSaver.saveTextFile(filename, data, 'application/json');
     showToast('数据已导出到下载文件夹（含全部本地数据）');
     return;
   }
-  // Browser mode: use blob download
+  // WebView / 移动端：用系统分享面板（可保存到文件/发送到其他应用）
+  if (navigator.share && navigator.canShare) {
+    const file = new File([data], filename, { type: 'application/json' });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'rua数据备份' });
+        showToast('已导出（请选择保存位置）');
+        return;
+      } catch (e) {
+        // 用户取消或分享失败，继续走兜底
+      }
+    }
+  }
+  // 兜底：复制到剪贴板
+  try {
+    await navigator.clipboard.writeText(data);
+    showToast('数据已复制到剪贴板（请自行保存为文件）');
+    return;
+  } catch (e) {}
+  // 浏览器模式：Blob 下载
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
