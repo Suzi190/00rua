@@ -11,52 +11,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
       - name: 设置Android环境变量
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-
       - name: 准备www目录
         run: |
           mkdir -p www
           cp -r js css *.html *.json *.png *.ico *.webmanifest www/ 2>/dev/null || true
           cp manifest.json www/ 2>/dev/null || true
-
       - run: npm install
-
       - run: npx cap init "rua小手机" "com.rua.phone" --web-dir=www
-
       - run: npx cap add android
-
       - run: npx cap sync
-
-      - name: 安装StatusBar插件
-        run: npm install @capacitor/core@6 @capacitor/status-bar@6.0.2 --legacy-peer-deps
-
-      - name: 同步插件
-        run: npx cap sync
-
       - name: 允许HTTP明文
         run: sed -i 's|<application|<application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
-
-      - name: 设置沉浸式状态栏
-        run: |
-          sed -i 's|<activity|<activity android:theme="@style/Theme.AppCompat.Light.NoActionBar"|' android/app/src/main/AndroidManifest.xml
-
       - name: 编译APK
         run: cd android && ./gradlew assembleDebug
-
       - uses: actions/upload-artifact@v4
         with:
           name: rua-APK
