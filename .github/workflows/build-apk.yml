@@ -42,7 +42,7 @@ jobs:
       - run: npx cap sync
 
       - name: 安装StatusBar插件
-        run: npm install @capacitor/status-bar@6.0.2 --legacy-peer-deps
+        run: npm install @capacitor/core@6 @capacitor/status-bar@6.0.2 --legacy-peer-deps
 
       - name: 同步插件
         run: npx cap sync
