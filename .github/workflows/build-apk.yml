@@ -41,8 +41,18 @@ jobs:
 
       - run: npx cap sync
 
+      - name: 安装StatusBar插件
+        run: npm install @capacitor/status-bar
+
+      - name: 同步插件
+        run: npx cap sync
+
       - name: 允许HTTP明文
         run: sed -i 's|<application|<application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
+
+      - name: 设置沉浸式状态栏
+        run: |
+          sed -i 's|<activity|<activity android:theme="@style/Theme.AppCompat.Light.NoActionBar"|' android/app/src/main/AndroidManifest.xml
 
       - name: 编译APK
         run: cd android && ./gradlew assembleDebug
