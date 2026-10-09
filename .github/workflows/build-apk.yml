@@ -182,6 +182,35 @@ jobs:
             if [ -f "$d/ic_launcher_round.png" ]; then cp -f icon-512.png "$d/ic_launcher_round.png"; fi
           done
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          # ⚠ 防回归自检：编译不报错、但桌面图标会静默变回模板图案/旧图标的三类坑。
+          # 1) 至少要有一个 mipmap-*/ic_launcher.png 真的被上面的 cp 替换过
+          #    （Capacitor 模板若改了图标文件名，cp 的 [ -f ] 判空会全部跳过，这里用计数拦住）
+          # 2) 自适应图标 XML 必须全清掉，否则 Android 8+ 优先用 XML 直接忽略 PNG
+          #    （只查 mipmap* 目录：模板自带的 drawable*/ic_launcher_foreground.xml 属于正常文件，
+          #      会被 adaptive-icon XML 引用，不能当成“残留”而误判失败）
+          # 3) 替换后的 PNG 必须与仓库根目录的 icon-512.png 逐字节一致
+          WANT="$(sha256sum icon-512.png | cut -d' ' -f1)"
+          echo "icon-512.png sha256=$WANT"
+          CHECKED=0
+          for d in android/app/src/main/res/mipmap-*; do
+            [ -f "$d/ic_launcher.png" ] || continue
+            GOT="$(sha256sum "$d/ic_launcher.png" | cut -d' ' -f1)"
+            if [ "$GOT" != "$WANT" ]; then
+              echo "::error::$d/ic_launcher.png 与 icon-512.png 不一致，桌面图标没换成新的"
+              exit 1
+            fi
+            CHECKED=$((CHECKED + 1))
+            echo "图标校验通过：$d/ic_launcher.png"
+          done
+          if [ "$CHECKED" -eq 0 ]; then
+            echo '::error::没有找到任何 mipmap-*/ic_launcher.png，图标替换步骤没生效（模板图标文件名可能变了）'
+            exit 1
+          fi
+          STRAY="$(find android/app/src/main/res -path '*mipmap*' -name 'ic_launcher*.xml' -print)"
+          if [ -n "$STRAY" ]; then
+            echo "::error::mipmap 里仍存在自适应图标 XML，会覆盖 PNG 桌面图标：$STRAY"
+            exit 1
+          fi
           echo '图标替换完成'
 
       - name: 注入正式签名配置
