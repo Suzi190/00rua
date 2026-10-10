@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script async="" src="leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/app-01.js?v=20260910v126"></script>
-<link rel="stylesheet" href="css/style-01.css?v=20261009bubble">
+<link rel="stylesheet" href="css/style-01.css?v=20261010lockfix">
 
   <!-- ===== 文游APP样式 ===== -->
   <link rel="stylesheet" href="css/style-02.css?v=20260905rg">
@@ -3285,7 +3285,7 @@
             </div>
             <div class="settings-item" onclick="toggleModelAdapt()">
               <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg></div>
-              <div class="settings-label">模型适配 <span style="font-size:10px;color:#C0B4BE">按当前模型补偏科、自动选温度</span></div>
+              <div class="settings-label">模型适配 <span style="font-size:10px;color:#C0B4BE">按模型补偏科（冷淡／套路腔／超雄写法）、线上线下分别适配、自动选温度</span></div>
               <div class="settings-value" id="settingsModelAdapt">已开启</div>
               <div class="settings-toggle" id="modelAdaptToggle"></div>
             </div>
@@ -5579,7 +5579,7 @@
 </div></div><!-- /phone-screen -->
 <div class="modal-overlay" id="ruaErrorOverlay" style="z-index: 10000;"><div class="modal-sheet rua-err-sheet"><div class="modal-handle"></div><div class="rua-err-head"><span class="rua-err-icon"></span><div class="rua-err-title"></div></div><div class="rua-err-ctx"></div><div class="rua-err-summary"></div><div class="rua-err-advice"></div><details class="rua-err-tech"><summary>技术详情（反馈给开发者时点这里）</summary><pre></pre></details><div class="rua-err-btns"><button class="btn-secondary" data-act="copy">复制详情</button><button class="btn-primary" data-act="retry" style="display:none">重试</button><button class="btn-primary" data-act="ok">我知道了</button></div></div></div><div class="modal-overlay" id="ruaErrorLogOverlay" style="z-index: 10000;"><div class="modal-sheet rua-err-sheet"><div class="modal-handle"></div><div class="modal-title">问题诊断 · 错误日志</div><div class="modal-close" data-act="closelog">×</div><div style="font-size:12px;opacity:.6;line-height:1.6;margin:4px 2px 10px">这里记录最近 50 条异常。遇到问题时可点「全部复制」发给开发者。</div><div id="ruaErrorLogList"></div><div class="rua-err-btns" style="margin-top:6px"><button class="btn-secondary" data-act="copyall">全部复制</button><button class="btn-secondary" data-act="clear">清空日志</button><button class="btn-primary" data-act="closelog2">关闭</button></div></div></div></div><!-- /phone-frame -->
 
-<script src="js/app-02.js?v=20261009bubble"></script>
+<script src="js/app-02.js?v=20261010charv3fix1"></script>
 
 <script src="js/world-system.js?v=20260905rg"></script>
 <script src="js/relation-photo.js?v=20260905rg"></script>
