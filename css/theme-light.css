@@ -210,7 +210,9 @@
 #view-chat.theme-light:not(.offline-mode) .wx-reply-icon svg { fill:#191919 !important; }
 #view-chat.theme-light:not(.offline-mode) .wx-chat-title { color:#191919 !important; }
 #view-chat.theme-light:not(.offline-mode) .wx-more svg { fill:#191919 !important; }
-#view-chat.theme-light:not(.offline-mode) .wx-heart-btn svg { fill:#888888 !important; }
+#view-chat.theme-light:not(.offline-mode) .wx-heart-btn svg { fill:#A8A8AD !important; }
+#view-chat.theme-light:not(.offline-mode) .wx-heart-btn.has-voice svg { fill:#8E8E93 !important; }
+#view-chat.theme-light:not(.offline-mode) .voice-popup { background:rgba(255,255,255,0.88) !important; box-shadow:0 8px 40px rgba(0,0,0,0.06) !important, 0 0 0 0.5px rgba(0,0,0,0.08) !important; }
 #view-chat.theme-light:not(.offline-mode) .chat-view { background-color:#EDEDED !important; }
 
 /* 输入区 */
@@ -282,5 +284,3 @@
 #view-chat.theme-light:not(.offline-mode) .msg:not(.self) .msg-bubble.msg-order-card .order-card-footer { background:rgba(0,0,0,0.04) !important; border-top-color:rgba(0,0,0,0.06) !important; }
 /* 照片卡片的描述文字在日间白气泡上加深 */
 #view-chat.theme-light:not(.offline-mode) .msg-photo-card { background:rgba(0,0,0,0.05) !important; }
-
-

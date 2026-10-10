@@ -191,7 +191,7 @@
       '.rua-log-pre{white-space:pre-wrap;word-break:break-all;font-size:11px;line-height:1.5;margin-top:6px;display:none;font-family:ui-monospace,Menlo,Consolas,monospace}' +
       '.rua-log-item.open .rua-log-pre{display:block}' +
       '.rua-log-empty{text-align:center;opacity:.55;font-size:13px;padding:36px 10px}' +
-      '#ruaErrLogBadge{display:none;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#FF3B30;color:#fff;font-size:11px;font-weight:600;margin-left:auto;margin-right:6px}' +
+      '#ruaErrLogBadge{display:none;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#E0708A;color:#fff;font-size:11px;font-weight:600;margin-left:auto;margin-right:6px}' +
       '#ruaMiniTip{position:fixed;left:50%;bottom:14%;transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:80%}' +
       '#ruaMiniTip.show{opacity:1}';
     document.head.appendChild(style);

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script async="" src="leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/app-01.js?v=20260910v126"></script>
-<link rel="stylesheet" href="css/style-01.css?v=20260905rg">
+<link rel="stylesheet" href="css/style-01.css?v=20261009bubble">
 
   <!-- ===== 文游APP样式 ===== -->
   <link rel="stylesheet" href="css/style-02.css?v=20260905rg">
@@ -1740,81 +1740,16 @@
 .ws-preset-save-btn:active{opacity:0.8}
 .ws-preset-empty{font-size:12px;color:rgba(255,255,255,0.3);text-align:center;padding:8px 0}
 </style><style data-rc-styles="true">
-.rc-overlay{position:fixed;inset:0;z-index:200;background:#000;display:none;flex-direction:column;max-width:100vw;margin:0 auto}
+/* 关系链：这里只留「首屏兜底」——元素默认隐藏，避免闪一下没样式的内容。
+   完整浅色温柔主题由 js/relation-photo.js 注入的 RELATION_CSS 提供。
+   注意：本块以前残留了一整套深色旧样式（#000 底、#1C1C1E 卡片），
+   其中 .rc-graph-wrap{background:#000} 不会被后注入的浅色样式覆盖，
+   会把关系图谱整条刷成黑带 —— 已整体删除，请勿再往这里加深色规则。 */
+.rc-overlay{position:fixed;inset:0;z-index:200;background:#FFFDFB;display:none;flex-direction:column;max-width:100vw;margin:0 auto}
 .rc-overlay.active{display:flex}
-.rc-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#1C1C1E;border-bottom:0.5px solid rgba(255,255,255,0.1);flex-shrink:0;z-index:5}
-.rc-nav-btn{width:32px;height:32px;display:grid;place-items:center;cursor:pointer;border:none;background:none;color:#fff;font-size:22px;line-height:1;border-radius:8px}
-.rc-nav-btn:active{background:rgba(255,255,255,0.1)}
-.rc-nav-title{font-size:17px;font-weight:600;color:#fff}
 .rc-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .rc-content::-webkit-scrollbar{display:none}
-.rc-graph-wrap{display:flex;justify-content:center;padding:8px 0 0;background:#000}
-.rc-graph-wrap svg{max-width:100%;height:auto;display:block}
-.rc-svg-node{cursor:pointer}
-.rc-svg-node:hover .rc-node-bg{filter:brightness(1.15)}
-.rc-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;padding:6px 16px 4px}
-.rc-legend-item{display:flex;align-items:center;gap:4px;color:#8E8E93;font-size:10px}
-.rc-legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.rc-hint{text-align:center;color:#8E8E93;font-size:11px;padding:0 20px 6px;min-height:16px}
-.rc-generate-btn{display:block;margin:8px auto 4px;padding:11px 32px;border:none;border-radius:22px;background:linear-gradient(135deg,#FF6B9D,#FFC7D9);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:transform .15s,opacity .2s}
-.rc-generate-btn:active{transform:scale(.96)}
-.rc-generate-btn:disabled{opacity:0.5;cursor:not-allowed}
-.rc-gen-time{text-align:center;color:#8E8E93;font-size:10px;padding:0 0 8px}
-.rc-list{padding:0 0 24px}
-.rc-section-title{color:#8E8E93;font-size:12px;font-weight:500;padding:12px 16px 6px}
-.rc-empty{text-align:center;color:#8E8E93;font-size:13px;padding:20px 0}
-.rc-edge-ph{opacity:.62}
-.rc-edge-ph .rc-edge-name{color:#AEAEB2}
-.rc-ph-toggle{margin:10px 12px 4px;padding:10px 14px;background:#202022;border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#AEAEB2;font-size:12px;cursor:pointer}
-.rc-ph-toggle.rc-ph-orphan{color:#C98A8A}
-.rc-ph-toggle:active{background:#2C2C2E}
-.rc-gen-row{display:flex;gap:10px;padding:8px 12px 2px}
-.rc-gen-row .rc-generate-btn{margin:0;flex:1;padding:11px 8px;font-size:13px}
-.rc-generate-btn.ghost{background:#2C2C2E;color:#FFB3CC}
-.rc-edge-card{background:#1C1C1E;margin:6px 12px;border-radius:12px;overflow:hidden}
-.rc-edge-header{display:flex;align-items:center;padding:12px 14px;cursor:pointer}
-.rc-edge-header:active{background:rgba(255,255,255,0.03)}
-.rc-edge-names{flex:1;display:flex;align-items:center;gap:5px;font-size:13px;color:#fff;min-width:0;overflow:hidden}
-.rc-edge-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px}
-.rc-edge-arrow{color:#8E8E93;font-size:12px;flex-shrink:0}
-.rc-edge-type-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;color:#fff;flex-shrink:0}
-.rc-edge-strength{display:flex;align-items:center;gap:5px;flex-shrink:0}
-.rc-edge-strength-bar{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden}
-.rc-edge-strength-fill{height:100%;border-radius:2px}
-.rc-edge-strength-num{color:#8E8E93;font-size:11px;min-width:14px;text-align:right}
-.rc-edge-detail{padding:0 14px 12px;display:none}
-.rc-edge-detail.show{display:block}
-.rc-view-box{background:#2C2C2E;border-radius:10px;padding:10px 12px;margin-bottom:6px}
-.rc-view-label{font-size:11px;color:#8E8E93;margin-bottom:3px}
-.rc-view-text{font-size:13px;color:#fff;line-height:1.5}
-.rc-edit-btn{margin-top:6px;padding:6px 18px;border-radius:16px;background:rgba(255,107,157,0.15);color:#FF6B9D;border:none;font-size:13px;font-weight:500;cursor:pointer}
-.rc-edit-btn:active{background:rgba(255,107,157,0.25)}
-.rc-modal{position:fixed;inset:0;z-index:210;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.rc-modal.active{display:flex}
-.rc-modal-content{background:#1C1C1E;border-radius:16px;padding:20px;width:100%;max-width:335px;max-height:85vh;overflow-y:auto;animation:rcFadeIn .2s ease}
-@keyframes rcFadeIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
-.rc-detail-title{font-size:16px;font-weight:600;color:#fff;text-align:center;margin-bottom:4px;line-height:1.4}
-.rc-detail-pair{color:#8E8E93;font-size:12px;text-align:center;margin-bottom:14px}
-.rc-detail-type-row{text-align:center;margin-bottom:14px}
-.rc-detail-strength{margin-bottom:14px}
-.rc-detail-strength-label{color:#8E8E93;font-size:12px;margin-bottom:5px}
-.rc-detail-strength-bar-wrap{display:flex;align-items:center;gap:8px}
-.rc-detail-strength-track{flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden}
-.rc-detail-strength-fill{height:100%;border-radius:3px}
-.rc-form-group{margin-bottom:14px}
-.rc-form-label{display:block;font-size:13px;color:#8E8E93;margin-bottom:6px}
-.rc-form-input,.rc-form-select,.rc-form-textarea{width:100%;background:#2C2C2E;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box}
-.rc-form-input:focus,.rc-form-select:focus,.rc-form-textarea:focus{border-color:rgba(255,107,157,0.5)}
-.rc-form-textarea{min-height:56px;resize:vertical;line-height:1.5}
-.rc-form-range{width:100%;accent-color:#FF6B9D}
-.rc-form-actions{display:flex;gap:10px;margin-top:18px}
-.rc-form-btn{flex:1;padding:11px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer}
-.rc-form-btn.cancel{background:#2C2C2E;color:#8E8E93}
-.rc-form-btn.cancel:active{background:#3C3C3E}
-.rc-form-btn.save{background:#FF6B9D;color:#fff}
-.rc-form-btn.save:active{opacity:0.85}
-.rc-loading-spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:rcSpin .7s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes rcSpin{to{transform:rotate(360deg)}}
+.rc-graph-wrap{display:flex;justify-content:center;padding:8px 0 0;background:transparent}
 </style><style data-pw-styles="true">
 .pw-overlay{position:fixed;inset:0;z-index:200;background:#000;display:none;flex-direction:column;max-width:100vw;margin:0 auto}
 .pw-overlay.active{display:flex}
@@ -1875,7 +1810,7 @@
 .pw-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.2);border-top-color:#FF6B9D;border-radius:50%;animation:pwSpin .8s linear infinite}
 @keyframes pwSpin{to{transform:rotate(360deg)}}
 .pw-loading-text{color:#fff;font-size:14px}
-</style><style>.rua-err-sheet{max-height:86%;overflow-y:auto;-webkit-overflow-scrolling:touch}.rua-err-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}.rua-err-icon{font-size:26px;line-height:1}.rua-err-title{font-size:17px;font-weight:700;flex:1;line-height:1.35}.rua-err-ctx{font-size:12px;opacity:.6;margin:2px 2px 10px}.rua-err-summary{font-size:13.5px;line-height:1.6;margin:0 2px 10px}.rua-err-advice{margin:0 0 12px}.rua-err-advice .a-item{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.55;background:rgba(128,128,128,.12);border-radius:10px;padding:8px 10px;margin-bottom:6px}.rua-err-advice .a-idx{flex:0 0 auto;font-weight:700;opacity:.7}.rua-err-tech{margin:0 0 14px;font-size:12px}.rua-err-tech summary{opacity:.7;cursor:pointer;padding:4px 2px}.rua-err-tech pre{white-space:pre-wrap;word-break:break-all;background:rgba(128,128,128,.12);border-radius:10px;padding:10px;font-size:11.5px;line-height:1.5;max-height:180px;overflow:auto;margin:6px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace}.rua-err-btns{display:flex;gap:8px;flex-wrap:wrap}.rua-err-btns button{flex:1;min-width:90px}.rua-log-item{background:rgba(128,128,128,.10);border-radius:10px;padding:9px 11px;margin-bottom:8px}.rua-log-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.rua-log-title{font-size:13px;font-weight:600;flex:1}.rua-log-time{font-size:11px;opacity:.55;flex:0 0 auto}.rua-log-ctx{font-size:11.5px;opacity:.6;margin-top:3px}.rua-log-pre{white-space:pre-wrap;word-break:break-all;font-size:11px;line-height:1.5;margin-top:6px;display:none;font-family:ui-monospace,Menlo,Consolas,monospace}.rua-log-item.open .rua-log-pre{display:block}.rua-log-empty{text-align:center;opacity:.55;font-size:13px;padding:36px 10px}#ruaErrLogBadge{display:none;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#FF3B30;color:#fff;font-size:11px;font-weight:600;margin-left:auto;margin-right:6px}#ruaMiniTip{position:fixed;left:50%;bottom:14%;transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:80%}#ruaMiniTip.show{opacity:1}</style><style id="wa-style">#waAuthOverlay,#waAssist,#waUserEditOverlay{position:absolute;inset:0;z-index:9000;background:#111214;color:#eee;font-size:14px;display:none;flex-direction:column;overflow:hidden}#waAuthOverlay.show,#waAssist.show,#waUserEditOverlay.show{display:flex}.wa-top{flex-shrink:0;padding:14px 16px;display:flex;align-items:center;gap:10px;background:#1c1c1e;border-bottom:.5px solid rgba(255,255,255,.08)}.wa-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.wa-card{background:#1c1c1e;border-radius:14px;margin:12px;overflow:hidden}.wa-row{display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:.5px solid rgba(255,255,255,.06);cursor:pointer}.wa-row:last-child{border-bottom:none}.wa-ava{width:46px;height:46px;border-radius:10px;background:#576B95;display:grid;place-items:center;font-size:20px;color:#fff;overflow:hidden;flex-shrink:0}.wa-ava img{width:100%;height:100%;object-fit:cover}.wa-grow{flex:1;min-width:0}.wa-name{font-size:16px;color:#fff;font-weight:600}.wa-sub{font-size:12px;color:#8e8e93;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wa-tag{font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(87,107,149,.25);color:#9db4e8;margin-left:6px}.wa-tag.char{background:rgba(255,159,10,.18);color:#ffb85c}.wa-btn{margin:14px 12px;padding:13px;border-radius:12px;text-align:center;font-size:16px;font-weight:600;background:#07C160;color:#fff;border:none;width:calc(100% - 24px)}.wa-btn.ghost{background:#2c2c2e;color:#ddd}.wa-btn.danger{background:#3a2326;color:#ff6b6b}.wa-btn:active{opacity:.8}.wa-input{width:100%;box-sizing:border-box;background:#2c2c2e;border:.5px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;padding:12px 13px;margin:8px 0;font-size:15px}.wa-field{padding:0 14px;margin-top:6px}.wa-field label{display:block;font-size:12px;color:#8e8e93;margin:10px 0 2px}.wa-h{padding:18px 16px 6px;font-size:13px;color:#8e8e93}.wa-seg{display:flex;gap:8px;padding:10px 12px;overflow-x:auto}.wa-seg .chip{flex-shrink:0;padding:7px 14px;border-radius:16px;background:#2c2c2e;color:#ccc;font-size:13px}.wa-seg .chip.on{background:#07C160;color:#fff}.wa-seg .chip.add{background:transparent;border:1px dashed #555;color:#999}.wa-back{width:30px;color:#bbb;font-size:22px;cursor:pointer;line-height:1}.wa-title{flex:1;text-align:center;font-size:16px;font-weight:600}.wa-link{color:#5795ff;font-size:13px;cursor:pointer}.wa-chatrow{display:flex;gap:11px;padding:11px 14px;border-bottom:.5px solid rgba(255,255,255,.06);cursor:pointer}.wa-bubble{max-width:72%;padding:9px 12px;border-radius:10px;font-size:15px;line-height:1.45;white-space:pre-wrap;word-break:break-word}.wa-bubble.l{background:#3a3a3c;color:#fff;border-top-left-radius:3px}.wa-bubble.r{background:#07C160;color:#fff;border-top-right-radius:3px;margin-left:auto}.wa-line{display:flex;margin:8px 14px;gap:8px;align-items:flex-start}.wa-moments{background:#1c1c1e;border-radius:12px;margin:10px 12px;padding:13px}.wa-riskbar{font-size:11px;color:#ffb85c;padding:6px 14px;background:rgba(255,159,10,.08)}</style><style id="styCss">.sty-wrap{padding:12px 12px 90px;color:#5b3a4a;font-size:14px;}.sty-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}.sty-back{border:0;background:#FFF0F5;color:#F5A0B8;font-weight:700;border-radius:999px;padding:7px 14px;font-size:13px;}.sty-h{font-size:18px;font-weight:800;color:#7a4a60;flex:1;text-align:center;}.sty-card{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(245,160,184,.08);}.sty-label{font-size:13px;font-weight:800;color:#a87b8c;margin-bottom:8px;}.sty-chips{display:flex;flex-wrap:wrap;gap:8px;}.sty-chip{padding:7px 13px;border-radius:999px;background:#FFF6FA;border:1px solid rgba(245,160,184,.25);color:#c0708f;font-size:13px;font-weight:600;}.sty-chip.sel{background:linear-gradient(135deg,#F5A0B8,#FFC7D9);color:#fff;border-color:transparent;}.sty-opt{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:#FFF6FA;border:1px solid rgba(245,160,184,.2);margin-bottom:8px;}.sty-opt.sel{background:linear-gradient(135deg,#ffe3ee,#fff4f8);border-color:#F5A0B8;}.sty-opt-n{font-weight:700;color:#9a5a76;font-size:14px;}.sty-opt-d{font-size:12px;color:#b48a9c;}.sty-row{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px dashed #ffe0ec;}.sty-row:last-child{border-bottom:0;}.sty-row input[type=checkbox]{width:17px;height:17px;accent-color:#F5A0B8;}.sty-row-n{font-weight:700;color:#6f4658;font-size:13.5px;}.sty-row-d{font-size:12px;color:#ab8896;}.sty-ta{width:100%;box-sizing:border-box;border:1px solid rgba(245,160,184,.25);border-radius:12px;padding:10px;font-size:13.5px;color:#5b3a4a;background:#FFFCFD;outline:none;resize:vertical;font-family:inherit;}.sty-inp{border:1px solid rgba(245,160,184,.25);border-radius:10px;padding:8px 10px;font-size:13px;color:#5b3a4a;background:#FFFCFD;outline:none;}.sty-btn{border:0;border-radius:14px;padding:12px 16px;font-size:14px;font-weight:800;background:linear-gradient(135deg,#F5A0B8,#FFC7D9);color:#fff;box-shadow:0 4px 12px rgba(245,160,184,.25);}.sty-btn.ghost{background:#FFF0F5;color:#c0708f;box-shadow:none;}.sty-btn.gray{background:#f1eef0;color:#8a7882;box-shadow:none;}.sty-btn.block{display:block;width:100%;}.sty-btn:disabled{opacity:.55;}.sty-bar{display:flex;gap:10px;margin-top:6px;}.sty-bar>*{flex:1;}.sty-lead{display:flex;gap:10px;align-items:center;}.sty-ava{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#F5A0B8,#C9A7E8);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;overflow:hidden;}.sty-ava img{width:100%;height:100%;object-fit:cover;}.sty-lead-m{flex:1;min-width:0;}.sty-lead-n{font-weight:800;color:#6f4658;font-size:14px;}.sty-lead-b{font-size:12px;color:#ab8896;line-height:1.4;}.sty-x{color:#F5A0B8;font-weight:800;padding:0 4px;}.sty-book{background:#fff;border-radius:14px;padding:13px;margin-bottom:10px;box-shadow:0 2px 8px rgba(245,160,184,.08);}.sty-book-t{font-weight:800;font-size:15px;color:#6f4658;}.sty-book-m{font-size:12px;color:#ab8896;margin:4px 0 8px;}.sty-tag{display:inline-block;font-size:11px;background:#FFF0F5;color:#c0708f;border-radius:999px;padding:2px 9px;margin:0 6px 4px 0;}.sty-prog{height:6px;border-radius:999px;background:#ffe8f1;overflow:hidden;margin:6px 0;}.sty-prog>i{display:block;height:100%;background:linear-gradient(135deg,#F5A0B8,#FFC7D9);}.sty-outline-sec{font-size:13.5px;line-height:1.7;color:#5b3a4a;white-space:pre-wrap;}.sty-chlist{max-height:46vh;overflow:auto;border:1px solid #ffe0ec;border-radius:12px;}.sty-chitem{display:flex;gap:8px;align-items:center;padding:9px 11px;border-bottom:1px dashed #ffe0ec;}.sty-chitem:last-child{border-bottom:0;}.sty-chitem.cur{background:#fff2f7;}.sty-chitem .n{width:24px;height:24px;border-radius:50%;background:#FFE0EC;color:#c0708f;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}.sty-chitem.done .n{background:#bfe8c9;color:#2f8a4d;}.sty-chitem-m{flex:1;min-width:0;}.sty-chitem-t{font-size:13.5px;font-weight:700;color:#6f4658;}.sty-chitem-b{font-size:11.5px;color:#ab8896;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.sty-write-layout{display:flex;flex-direction:column;gap:10px;}.sty-wc{font-size:12px;color:#ab8896;text-align:right;}.sty-loading{padding:24px;text-align:center;color:#c0708f;font-size:14px;}.sty-err{background:#fff0f0;border:1px solid #ffc9c9;color:#c05555;border-radius:10px;padding:10px;font-size:12.5px;margin-top:8px;line-height:1.6;}.sty-mini{font-size:12px;color:#ab8896;}.sty-manual-row{display:flex;gap:8px;margin-bottom:8px;}.sty-manual-row .sty-inp{flex:1;}.sty-icobtn{border:0;background:#FFF0F5;color:#c0708f;border-radius:10px;padding:8px 10px;font-size:12.5px;font-weight:700;}</style><style id="custom-page-css"></style><style id="custom-bubble-css"></style></head>
+</style><style>.rua-err-sheet{max-height:86%;overflow-y:auto;-webkit-overflow-scrolling:touch}.rua-err-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}.rua-err-icon{font-size:26px;line-height:1}.rua-err-title{font-size:17px;font-weight:700;flex:1;line-height:1.35}.rua-err-ctx{font-size:12px;opacity:.6;margin:2px 2px 10px}.rua-err-summary{font-size:13.5px;line-height:1.6;margin:0 2px 10px}.rua-err-advice{margin:0 0 12px}.rua-err-advice .a-item{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.55;background:rgba(128,128,128,.12);border-radius:10px;padding:8px 10px;margin-bottom:6px}.rua-err-advice .a-idx{flex:0 0 auto;font-weight:700;opacity:.7}.rua-err-tech{margin:0 0 14px;font-size:12px}.rua-err-tech summary{opacity:.7;cursor:pointer;padding:4px 2px}.rua-err-tech pre{white-space:pre-wrap;word-break:break-all;background:rgba(128,128,128,.12);border-radius:10px;padding:10px;font-size:11.5px;line-height:1.5;max-height:180px;overflow:auto;margin:6px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace}.rua-err-btns{display:flex;gap:8px;flex-wrap:wrap}.rua-err-btns button{flex:1;min-width:90px}.rua-log-item{background:rgba(128,128,128,.10);border-radius:10px;padding:9px 11px;margin-bottom:8px}.rua-log-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.rua-log-title{font-size:13px;font-weight:600;flex:1}.rua-log-time{font-size:11px;opacity:.55;flex:0 0 auto}.rua-log-ctx{font-size:11.5px;opacity:.6;margin-top:3px}.rua-log-pre{white-space:pre-wrap;word-break:break-all;font-size:11px;line-height:1.5;margin-top:6px;display:none;font-family:ui-monospace,Menlo,Consolas,monospace}.rua-log-item.open .rua-log-pre{display:block}.rua-log-empty{text-align:center;opacity:.55;font-size:13px;padding:36px 10px}#ruaErrLogBadge{display:none;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#E0708A;color:#fff;font-size:11px;font-weight:600;margin-left:auto;margin-right:6px}#ruaMiniTip{position:fixed;left:50%;bottom:14%;transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:80%}#ruaMiniTip.show{opacity:1}</style><style id="wa-style">#waAuthOverlay,#waAssist,#waUserEditOverlay{position:absolute;inset:0;z-index:9000;background:#111214;color:#eee;font-size:14px;display:none;flex-direction:column;overflow:hidden}#waAuthOverlay.show,#waAssist.show,#waUserEditOverlay.show{display:flex}.wa-top{flex-shrink:0;padding:14px 16px;display:flex;align-items:center;gap:10px;background:#1c1c1e;border-bottom:.5px solid rgba(255,255,255,.08)}.wa-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.wa-card{background:#1c1c1e;border-radius:14px;margin:12px;overflow:hidden}.wa-row{display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:.5px solid rgba(255,255,255,.06);cursor:pointer}.wa-row:last-child{border-bottom:none}.wa-ava{width:46px;height:46px;border-radius:10px;background:#576B95;display:grid;place-items:center;font-size:20px;color:#fff;overflow:hidden;flex-shrink:0}.wa-ava img{width:100%;height:100%;object-fit:cover}.wa-grow{flex:1;min-width:0}.wa-name{font-size:16px;color:#fff;font-weight:600}.wa-sub{font-size:12px;color:#8e8e93;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wa-tag{font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(87,107,149,.25);color:#9db4e8;margin-left:6px}.wa-tag.char{background:rgba(255,159,10,.18);color:#ffb85c}.wa-btn{margin:14px 12px;padding:13px;border-radius:12px;text-align:center;font-size:16px;font-weight:600;background:#07C160;color:#fff;border:none;width:calc(100% - 24px)}.wa-btn.ghost{background:#2c2c2e;color:#ddd}.wa-btn.danger{background:#3a2326;color:#ff6b6b}.wa-btn:active{opacity:.8}.wa-input{width:100%;box-sizing:border-box;background:#2c2c2e;border:.5px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;padding:12px 13px;margin:8px 0;font-size:15px}.wa-field{padding:0 14px;margin-top:6px}.wa-field label{display:block;font-size:12px;color:#8e8e93;margin:10px 0 2px}.wa-h{padding:18px 16px 6px;font-size:13px;color:#8e8e93}.wa-seg{display:flex;gap:8px;padding:10px 12px;overflow-x:auto}.wa-seg .chip{flex-shrink:0;padding:7px 14px;border-radius:16px;background:#2c2c2e;color:#ccc;font-size:13px}.wa-seg .chip.on{background:#07C160;color:#fff}.wa-seg .chip.add{background:transparent;border:1px dashed #555;color:#999}.wa-back{width:30px;color:#bbb;font-size:22px;cursor:pointer;line-height:1}.wa-title{flex:1;text-align:center;font-size:16px;font-weight:600}.wa-link{color:#5795ff;font-size:13px;cursor:pointer}.wa-chatrow{display:flex;gap:11px;padding:11px 14px;border-bottom:.5px solid rgba(255,255,255,.06);cursor:pointer}.wa-bubble{max-width:72%;padding:9px 12px;border-radius:10px;font-size:15px;line-height:1.45;white-space:pre-wrap;word-break:break-word}.wa-bubble.l{background:#3a3a3c;color:#fff;border-top-left-radius:3px}.wa-bubble.r{background:#07C160;color:#fff;border-top-right-radius:3px;margin-left:auto}.wa-line{display:flex;margin:8px 14px;gap:8px;align-items:flex-start}.wa-moments{background:#1c1c1e;border-radius:12px;margin:10px 12px;padding:13px}.wa-riskbar{font-size:11px;color:#ffb85c;padding:6px 14px;background:rgba(255,159,10,.08)}</style><style id="styCss">.sty-wrap{padding:12px 12px 90px;color:#5b3a4a;font-size:14px;}.sty-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}.sty-back{border:0;background:#FFF0F5;color:#F5A0B8;font-weight:700;border-radius:999px;padding:7px 14px;font-size:13px;}.sty-h{font-size:18px;font-weight:800;color:#7a4a60;flex:1;text-align:center;}.sty-card{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(245,160,184,.08);}.sty-label{font-size:13px;font-weight:800;color:#a87b8c;margin-bottom:8px;}.sty-chips{display:flex;flex-wrap:wrap;gap:8px;}.sty-chip{padding:7px 13px;border-radius:999px;background:#FFF6FA;border:1px solid rgba(245,160,184,.25);color:#c0708f;font-size:13px;font-weight:600;}.sty-chip.sel{background:linear-gradient(135deg,#F5A0B8,#FFC7D9);color:#fff;border-color:transparent;}.sty-opt{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:#FFF6FA;border:1px solid rgba(245,160,184,.2);margin-bottom:8px;}.sty-opt.sel{background:linear-gradient(135deg,#ffe3ee,#fff4f8);border-color:#F5A0B8;}.sty-opt-n{font-weight:700;color:#9a5a76;font-size:14px;}.sty-opt-d{font-size:12px;color:#b48a9c;}.sty-row{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px dashed #ffe0ec;}.sty-row:last-child{border-bottom:0;}.sty-row input[type=checkbox]{width:17px;height:17px;accent-color:#F5A0B8;}.sty-row-n{font-weight:700;color:#6f4658;font-size:13.5px;}.sty-row-d{font-size:12px;color:#ab8896;}.sty-ta{width:100%;box-sizing:border-box;border:1px solid rgba(245,160,184,.25);border-radius:12px;padding:10px;font-size:13.5px;color:#5b3a4a;background:#FFFCFD;outline:none;resize:vertical;font-family:inherit;}.sty-inp{border:1px solid rgba(245,160,184,.25);border-radius:10px;padding:8px 10px;font-size:13px;color:#5b3a4a;background:#FFFCFD;outline:none;}.sty-btn{border:0;border-radius:14px;padding:12px 16px;font-size:14px;font-weight:800;background:linear-gradient(135deg,#F5A0B8,#FFC7D9);color:#fff;box-shadow:0 4px 12px rgba(245,160,184,.25);}.sty-btn.ghost{background:#FFF0F5;color:#c0708f;box-shadow:none;}.sty-btn.gray{background:#f1eef0;color:#8a7882;box-shadow:none;}.sty-btn.block{display:block;width:100%;}.sty-btn:disabled{opacity:.55;}.sty-bar{display:flex;gap:10px;margin-top:6px;}.sty-bar>*{flex:1;}.sty-lead{display:flex;gap:10px;align-items:center;}.sty-ava{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#F5A0B8,#C9A7E8);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;overflow:hidden;}.sty-ava img{width:100%;height:100%;object-fit:cover;}.sty-lead-m{flex:1;min-width:0;}.sty-lead-n{font-weight:800;color:#6f4658;font-size:14px;}.sty-lead-b{font-size:12px;color:#ab8896;line-height:1.4;}.sty-x{color:#F5A0B8;font-weight:800;padding:0 4px;}.sty-book{background:#fff;border-radius:14px;padding:13px;margin-bottom:10px;box-shadow:0 2px 8px rgba(245,160,184,.08);}.sty-book-t{font-weight:800;font-size:15px;color:#6f4658;}.sty-book-m{font-size:12px;color:#ab8896;margin:4px 0 8px;}.sty-tag{display:inline-block;font-size:11px;background:#FFF0F5;color:#c0708f;border-radius:999px;padding:2px 9px;margin:0 6px 4px 0;}.sty-prog{height:6px;border-radius:999px;background:#ffe8f1;overflow:hidden;margin:6px 0;}.sty-prog>i{display:block;height:100%;background:linear-gradient(135deg,#F5A0B8,#FFC7D9);}.sty-outline-sec{font-size:13.5px;line-height:1.7;color:#5b3a4a;white-space:pre-wrap;}.sty-chlist{max-height:46vh;overflow:auto;border:1px solid #ffe0ec;border-radius:12px;}.sty-chitem{display:flex;gap:8px;align-items:center;padding:9px 11px;border-bottom:1px dashed #ffe0ec;}.sty-chitem:last-child{border-bottom:0;}.sty-chitem.cur{background:#fff2f7;}.sty-chitem .n{width:24px;height:24px;border-radius:50%;background:#FFE0EC;color:#c0708f;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}.sty-chitem.done .n{background:#bfe8c9;color:#2f8a4d;}.sty-chitem-m{flex:1;min-width:0;}.sty-chitem-t{font-size:13.5px;font-weight:700;color:#6f4658;}.sty-chitem-b{font-size:11.5px;color:#ab8896;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.sty-write-layout{display:flex;flex-direction:column;gap:10px;}.sty-wc{font-size:12px;color:#ab8896;text-align:right;}.sty-loading{padding:24px;text-align:center;color:#c0708f;font-size:14px;}.sty-err{background:#fff0f0;border:1px solid #ffc9c9;color:#c05555;border-radius:10px;padding:10px;font-size:12.5px;margin-top:8px;line-height:1.6;}.sty-mini{font-size:12px;color:#ab8896;}.sty-manual-row{display:flex;gap:8px;margin-bottom:8px;}.sty-manual-row .sty-inp{flex:1;}.sty-icobtn{border:0;background:#FFF0F5;color:#c0708f;border-radius:10px;padding:8px 10px;font-size:12.5px;font-weight:700;}</style><style id="custom-page-css"></style><style id="custom-bubble-css"></style></head>
 <body>
 
 <link rel="stylesheet" href="css/style-03.css?v=20261007white">
@@ -2087,14 +2022,14 @@
 
       <!-- ===== 电话 ===== -->
       <div class="view" id="view-phone">
-        <div class="app-header" style="background:#000;border-bottom:none">
+        <div class="app-header">
           <div class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24"><path d="M15.4 7.4L14 6l-6 6 6 6 1.4-1.4L10.8 12z" fill="#fff"></path></svg></div>
-          <div class="app-title" style="color:#fff">电话</div>
+          <div class="app-title">电话</div>
           <div style="width:32px"></div>
         </div>
-        <div style="flex:1;overflow-y:auto;background:#000" id="phoneAppScroll">
+        <div id="phoneAppScroll">
           <!-- 标签栏 -->
-          <div style="display:flex;background:#1C1C1E;border-radius:10px;margin:8px 16px;overflow:hidden">
+          <div class="phone-tabs">
             <div id="phoneTabKeypad" class="phone-tab active" onclick="phoneSwitchTab('keypad')">键盘</div>
             <div id="phoneTabRecents" class="phone-tab" onclick="phoneSwitchTab('recents')">最近通话</div>
             <div id="phoneTabContacts" class="phone-tab" onclick="phoneSwitchTab('contacts')">联系人</div>
@@ -2124,12 +2059,12 @@
                 <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:#fff"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"></path></svg>
               </div>
               <div class="phone-delete-btn" id="phoneDeleteBtn" onclick="phoneDeleteDigit()">
-                <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:#8E8E93"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"></path></svg>
+                <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:#C9BCC2"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"></path></svg>
               </div>
             </div>
             <!-- 号码选择 -->
-            <div style="margin:16px;padding:12px;background:#1C1C1E;border-radius:12px">
-              <div style="font-size:12px;color:#8E8E93;margin-bottom:8px">本机号码</div>
+            <div class="phone-num-card">
+              <div class="phone-num-card-label">本机号码</div>
               <div style="display:flex;gap:8px">
                 <div id="phoneNumSelf" class="phone-num-chip active" onclick="phoneSelectNum('self')">自己号码</div>
                 <div id="phoneNumAnon" class="phone-num-chip" onclick="phoneSelectNum('anon')">匿名号码</div>
@@ -2601,6 +2536,18 @@
           <div class="offline-setting-group">
             <div class="offline-setting-label">💭 自定义文风补充（可选）</div>
             <input class="offline-setting-input" id="offlineSetCustomStyle" placeholder="如：多用环境描写、偏意识流...">
+          </div>
+          <div class="offline-setting-group">
+            <div class="offline-setting-label">🎨 气泡美化</div>
+            <div class="offline-bubble-themes" id="offlineBubbleThemes">
+              <div class="offline-bubble-theme" data-theme="default" onclick="selectOfflineBubbleTheme(this)"><div class="obt-preview obt-default"></div><span>默认</span></div>
+              <div class="offline-bubble-theme" data-theme="ins-glass" onclick="selectOfflineBubbleTheme(this)"><div class="obt-preview obt-ins-glass"></div><span>毛玻璃</span></div>
+              <div class="offline-bubble-theme" data-theme="pink-sweet" onclick="selectOfflineBubbleTheme(this)"><div class="obt-preview obt-pink-sweet"></div><span>甜美</span></div>
+              <div class="offline-bubble-theme" data-theme="blue-clear" onclick="selectOfflineBubbleTheme(this)"><div class="obt-preview obt-blue-clear"></div><span>清透</span></div>
+              <div class="offline-bubble-theme" data-theme="green-fresh" onclick="selectOfflineBubbleTheme(this)"><div class="obt-preview obt-green-fresh"></div><span>清新</span></div>
+              <div class="offline-bubble-theme" data-theme="purple-soft" onclick="selectOfflineBubbleTheme(this)"><div class="obt-preview obt-purple-soft"></div><span>温柔</span></div>
+              <div class="offline-bubble-theme" data-theme="yellow-bright" onclick="selectOfflineBubbleTheme(this)"><div class="obt-preview obt-yellow-bright"></div><span>明媚</span></div>
+            </div>
           </div>
           <button class="offline-settings-close" onclick="saveOfflineSettings()">保存设置</button>
         </div>
@@ -3179,49 +3126,49 @@
           <!-- API状态 -->
           <div class="api-status-bar">
             <div class="api-dot" id="settingsApiDot"></div>
-            <span style="font-size:12px;color:#7E728A;font-weight:500" id="settingsApiText">AI 接口未配置</span>
+            <span style="font-size:12px;color:#6C5B65;font-weight:500" id="settingsApiText">AI 接口未配置</span>
           </div>
 
           <!-- AI 接口 -->
           <div class="settings-group-title">AI 接口</div>
           <div class="settings-group">
             <div class="settings-item" onclick="openModal('apiModal')">
-              <div class="settings-icon" style="background:rgba(200,230,213,0.3)">🔑</div>
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg></div>
               <div class="settings-label">API 配置与预设</div>
               <div class="settings-value" id="settingsApiStatus">未配置</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('tempModal')">
-              <div class="settings-icon" style="background:rgba(235,215,185,0.3)">🌡️</div>
+              <div class="settings-icon si-apricot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg></div>
               <div class="settings-label">模型温度</div>
               <div class="settings-value" id="settingsTempVal">0.8</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="testApi()">
-              <div class="settings-icon" style="background:rgba(195,215,230,0.3)">🧪</div>
+              <div class="settings-icon si-dusk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="m2 22 3-3"/><path d="M7.5 13.5 10 11"/><path d="M10.5 16.5 13 14"/><path d="m18 3-4 4h6l-4 4"/></svg></div>
               <div class="settings-label">测试连接</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openEmbeddingSettings()">
-              <div class="settings-icon" style="background:rgba(213,205,232,0.3)">🧲</div>
+              <div class="settings-icon si-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 15 4 4"/><path d="M2.352 10.648a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l6.029-6.029a1 1 0 1 1 3 3l-6.029 6.029a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l6.365-6.367A1 1 0 0 0 8.716 4.282z"/><path d="m5 8 4 4"/></svg></div>
               <div class="settings-label">向量检索设置</div>
               <div class="settings-value" id="settingsVectorRecall">未启用</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openImageApiModal()">
-              <div class="settings-icon" style="background:rgba(245,208,169,0.3)">🎨</div>
+              <div class="settings-icon si-blush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></svg></div>
               <div class="settings-label">图片生成 API</div>
               <div class="settings-value" id="settingsImageApi">未配置</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openVoiceApiModal()">
-              <div class="settings-icon" style="background:rgba(180,220,240,0.3)">🔊</div>
+              <div class="settings-icon si-clay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg></div>
               <div class="settings-label">语音合成 API</div>
               <div class="settings-value" id="settingsVoiceApi">浏览器内置</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="if(typeof addMcpApp==='function'){addMcpApp();}else{showToast('MCP模块未加载');}">
-              <div class="settings-icon" style="background:rgba(180,190,255,0.3)">🧩</div>
+              <div class="settings-icon si-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z"/></svg></div>
               <div class="settings-label">MCP 应用管理</div>
               <div class="settings-value" id="settingsMcp">连接外部服务</div>
               <div class="settings-arrow"></div>
@@ -3232,7 +3179,7 @@
           <div class="settings-group-title">角色设定</div>
           <div class="settings-group">
             <div class="settings-item" onclick="waOpenAuth()">
-              <div class="settings-icon" style="background:rgba(200,215,235,0.3)">👤</div>
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></div>
               <div class="settings-label">账号管理</div>
               <div class="settings-value">切换 / 注册 / 注销人设</div>
               <div class="settings-arrow"></div>
@@ -3243,51 +3190,51 @@
           <div class="settings-group-title">聊天</div>
           <div class="settings-group">
             <div class="settings-item" onclick="toggleSetting('streaming')">
-              <div class="settings-icon" style="background:rgba(200,230,213,0.3)">🌊</div>
+              <div class="settings-icon si-dusk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12q2.5 2 5 0t5 0 5 0 5 0"/><path d="M2 19q2.5 2 5 0t5 0 5 0 5 0"/><path d="M2 5q2.5 2 5 0t5 0 5 0 5 0"/></svg></div>
               <div class="settings-label">流式输出</div>
               <div class="settings-toggle on" id="toggle-streaming"></div>
             </div>
             <div class="settings-item" onclick="toggleSetting('proactiveEnabled')">
-              <div class="settings-icon" style="background:rgba(232,197,208,0.3)">💫</div>
+              <div class="settings-icon si-blush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg></div>
               <div class="settings-label">主动消息</div>
               <div class="settings-toggle" id="toggle-proactiveEnabled"></div>
             </div>
             <div class="settings-item" onclick="openModal('proactiveModal')" id="proactiveIntervalItem" style="opacity: 0.4;">
-              <div class="settings-icon" style="background:rgba(213,205,232,0.3)">⏰</div>
+              <div class="settings-icon si-apricot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M6.38 18.7 4 21"/><path d="M17.64 18.67 20 21"/></svg></div>
               <div class="settings-label">主动消息间隔</div>
               <div class="settings-value" id="settingsProactiveInterval">60分钟</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('momentGenerationModal')">
-              <div class="settings-icon" style="background:rgba(255,214,231,0.35)">🌸</div>
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"/><path d="M12 7.5V9"/><path d="M7.5 12H9"/><path d="M16.5 12H15"/><path d="M12 16.5V15"/><path d="m8 8 1.88 1.88"/><path d="M14.12 9.88 16 8"/><path d="m8 16 1.88-1.88"/><path d="M14.12 14.12 16 16"/></svg></div>
               <div class="settings-label">朋友圈生成</div>
               <div class="settings-value" id="settingsMomentGenerationMode">自动生成</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="toggleSetting('timeAwarenessEnabled')">
-              <div class="settings-icon" style="background:rgba(195,215,230,0.3)">🕐</div>
+              <div class="settings-icon si-sand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></div>
               <div class="settings-label">时间感知</div>
               <div class="settings-toggle on" id="toggle-timeAwarenessEnabled"></div>
             </div>
             <div class="settings-item" onclick="toggleSetting('realMapEnabled')">
-              <div class="settings-icon" style="background:rgba(200,230,213,0.3)">🗺️</div>
+              <div class="settings-icon si-clay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg></div>
               <div class="settings-label">真实地图</div>
               <div class="settings-toggle on" id="toggle-realMapEnabled"></div>
             </div>
             <div class="settings-item" onclick="toggleVoiceRecordMode()">
-              <div class="settings-icon" style="background:rgba(7,193,96,0.15)">🎤</div>
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg></div>
               <div class="settings-label">语音录制方式</div>
               <div class="settings-value" id="voiceRecordModeLabel">模拟录音</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openAsrConfig()">
-              <div class="settings-icon" style="background:rgba(88,86,214,0.15)">🗣️</div>
+              <div class="settings-icon si-dusk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></div>
               <div class="settings-label">语音转文字 ASR</div>
               <div class="settings-value" id="asrConfigLabel">未配置</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('clearChatModal')">
-              <div class="settings-icon" style="background:rgba(220,160,170,0.2)">🗑️</div>
+              <div class="settings-icon si-clay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
               <div class="settings-label">清空聊天记录</div>
               <div class="settings-arrow"></div>
             </div>
@@ -3297,19 +3244,19 @@
           <div class="settings-group-title">锁屏</div>
           <div class="settings-group">
             <div class="settings-item" onclick="openModal('lockPasswordModal')">
-              <div class="settings-icon" style="background:rgba(200,210,230,0.3)">🔒</div>
+              <div class="settings-icon si-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
               <div class="settings-label">锁屏密码</div>
               <div class="settings-value" id="settingsLockPassword">未设置</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('autoLockModal')">
-              <div class="settings-icon" style="background:rgba(200,220,240,0.3)">⏱️</div>
+              <div class="settings-icon si-apricot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg></div>
               <div class="settings-label">自动锁屏</div>
               <div class="settings-value" id="settingsAutoLock">1分钟</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="lockNow()">
-              <div class="settings-icon" style="background:rgba(200,220,240,0.3)">📱</div>
+              <div class="settings-icon si-sand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></div>
               <div class="settings-label">立即锁屏</div>
               <div class="settings-arrow"></div>
             </div>
@@ -3319,31 +3266,37 @@
           <div class="settings-group-title">内置词</div>
           <div class="settings-group">
             <div class="settings-item" onclick="openModal('baseRulesModal')">
-              <div class="settings-icon" style="background:rgba(213,205,232,0.3)">🧬</div>
+              <div class="settings-icon si-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 16 1.5 1.5"/><path d="m14 8-1.5-1.5"/><path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"/><path d="m16.5 10.5 1 1"/><path d="m17 6-2.891-2.891"/><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="m20 9 .891.891"/><path d="M3.109 14.109 4 15"/><path d="m6.5 12.5 1 1"/><path d="m7 18 2.891 2.891"/><path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"/></svg></div>
               <div class="settings-label">活人感底层规则</div>
               <div class="settings-value" id="settingsBaseRules">默认</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('onlineRulesModal')">
-              <div class="settings-icon" style="background:rgba(200,230,213,0.3)">💬</div>
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg></div>
               <div class="settings-label">线上模式规则</div>
               <div class="settings-value" id="settingsOnlineRules">默认</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('offlineRulesModal')">
-              <div class="settings-icon" style="background:rgba(220,190,205,0.3)">📖</div>
+              <div class="settings-icon si-sand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg></div>
               <div class="settings-label">线下模式规则</div>
               <div class="settings-value" id="settingsOfflineRules">默认</div>
               <div class="settings-arrow"></div>
             </div>
+            <div class="settings-item" onclick="toggleModelAdapt()">
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg></div>
+              <div class="settings-label">模型适配 <span style="font-size:10px;color:#C0B4BE">按当前模型补偏科、自动选温度</span></div>
+              <div class="settings-value" id="settingsModelAdapt">已开启</div>
+              <div class="settings-toggle" id="modelAdaptToggle"></div>
+            </div>
             <div class="settings-item" onclick="openWorldBookModal()">
-              <div class="settings-icon" style="background:rgba(195,215,230,0.3)">📚</div>
+              <div class="settings-icon si-clay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></div>
               <div class="settings-label">全局世界书</div>
               <div class="settings-value" id="settingsWorldBook">未添加</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openPromptConfigModal()">
-              <div class="settings-icon" style="background:rgba(213,205,232,0.3)">📝</div>
+              <div class="settings-icon si-dusk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></div>
               <div class="settings-label">Prompt预设</div>
               <div class="settings-arrow"></div>
             </div>
@@ -3353,36 +3306,36 @@
           <div class="settings-group-title">自定义外观</div>
           <div class="settings-group">
             <div class="settings-item" onclick="toggleSetting('dynamicIslandVisible')">
-              <div class="settings-icon" style="background:rgba(58,53,64,0.15)">🏝️</div>
+              <div class="settings-icon si-sand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg></div>
               <div class="settings-label">灵动岛</div>
               <div class="settings-toggle on" id="toggle-dynamicIslandVisible"></div>
             </div>
             <div class="settings-item" onclick="openAppIconListModal()">
-              <div class="settings-icon" style="background:rgba(245,180,200,0.3)">📱</div>
+              <div class="settings-icon si-blush"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></div>
               <div class="settings-label">自定义APP图标</div>
               <div class="settings-value" id="settingsAppIcons">默认</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('pageCssModal')">
-              <div class="settings-icon" style="background:rgba(213,205,232,0.3)">🎨</div>
+              <div class="settings-icon si-apricot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg></div>
               <div class="settings-label">页面 UI 自定义</div>
               <div class="settings-value" id="settingsPageCss">默认</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openModal('bubbleCssModal')">
-              <div class="settings-icon" style="background:rgba(232,197,208,0.3)">💬</div>
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg></div>
               <div class="settings-label">聊天气泡自定义</div>
               <div class="settings-value" id="settingsBubbleCss">默认</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openHomeWallpaperModal()">
-              <div class="settings-icon" style="background:rgba(255,214,228,0.35)">🖼️</div>
+              <div class="settings-icon si-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div>
               <div class="settings-label">更换壁纸</div>
               <div class="settings-value" id="settingsHomeWallpaper">默认</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="openLockWallpaperModal()">
-              <div class="settings-icon" style="background:rgba(58,53,64,0.15)">🔒</div>
+              <div class="settings-icon si-clay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v4"/><path d="M8 21h8"/><path d="m9 17 6.1-6.1a2 2 0 0 1 2.81.01L22 15"/><circle cx="8" cy="9" r="2"/><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div>
               <div class="settings-label">锁屏壁纸</div>
               <div class="settings-value" id="settingsLockWallpaper">默认</div>
               <div class="settings-arrow"></div>
@@ -3393,30 +3346,30 @@
           <div class="settings-group-title">数据管理</div>
           <div class="settings-group">
             <div class="settings-item" onclick="exportData()">
-              <div class="settings-icon" style="background:rgba(200,230,213,0.3)">📤</div>
+              <div class="settings-icon si-dusk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></div>
               <div class="settings-label">导出数据备份</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="document.getElementById('importFileInput').click()">
-              <div class="settings-icon" style="background:rgba(195,215,230,0.3)">📥</div>
+              <div class="settings-icon si-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg></div>
               <div class="settings-label">导入数据恢复</div>
               <div class="settings-arrow"></div>
             </div>
             <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
             <div class="settings-item" onclick="restoreSafetySnapshot()">
-              <div class="settings-icon" style="background:rgba(213,230,195,0.3)">🛟</div>
+              <div class="settings-icon si-apricot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></div>
               <div class="settings-label">恢复最近自动备份</div>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="RuaErrorCenter.openLog()">
-              <div class="settings-icon" style="background:rgba(230,215,195,0.3)">🩺</div>
+              <div class="settings-icon si-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg></div>
               <div class="settings-label">问题诊断 / 错误日志</div>
               <span id="ruaErrLogBadge" style="display: none;">0</span>
               <div class="settings-arrow"></div>
             </div>
             <div class="settings-item" onclick="clearAllData()">
-              <div class="settings-icon" style="background:rgba(230,195,195,0.3)">🗑️</div>
-              <div class="settings-label" style="color:#FF3B30">清空所有数据</div>
+              <div class="settings-icon si-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+              <div class="settings-label" style="color:#E0708A">清空所有数据</div>
               <div class="settings-arrow"></div>
             </div>
           </div>
@@ -3425,7 +3378,7 @@
           <div class="settings-group-title">关于</div>
           <div class="settings-group">
             <div class="settings-item">
-              <div class="settings-icon" style="background:rgba(213,205,232,0.3)">📱</div>
+              <div class="settings-icon si-sand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
               <div class="settings-label">版本</div>
               <div class="settings-value">rua小手机 v1.0</div>
             </div>
@@ -3552,7 +3505,7 @@
         </div>
 
         <button class="btn-primary" onclick="applyImageApiConfig()">应用配置</button>
-        <button class="btn-sm btn-mint" style="width:100%;margin-top:8px" onclick="testImageApi()">🧪 测试生成一张图</button>
+        <button class="btn-sm btn-mint" style="width:100%;margin-top:8px" onclick="testImageApi()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg> 测试生成一张图</button>
         <button class="btn-secondary" onclick="closeModal('imageApiModal')">取消</button>
         <div id="imgApiTestResult" style="margin-top:10px"></div>
       </div>
@@ -3629,7 +3582,7 @@
             <div class="form-hint" style="margin-top:4px">手动输入MiniMax音色ID，适合系统未拉取到的音色或自定义克隆音色</div>
           </div>
           <button class="btn-primary" onclick="applyTtsApiConfig()">应用配置</button>
-          <button class="btn-sm btn-mint" style="width:100%;margin-top:8px" onclick="testTtsVoice()">🧪 测试语音合成</button>
+          <button class="btn-sm btn-mint" style="width:100%;margin-top:8px" onclick="testTtsVoice()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg> 测试语音合成</button>
           <div id="ttsTestResult" style="margin-top:10px"></div>
         </div>
 
@@ -3690,7 +3643,7 @@
             </div>
           </div>
           <button class="btn-primary" onclick="applyTtsApiConfig()">应用配置</button>
-          <button class="btn-sm btn-mint" style="width:100%;margin-top:8px" onclick="testElevenLabsVoice()">🧪 测试语音合成</button>
+          <button class="btn-sm btn-mint" style="width:100%;margin-top:8px" onclick="testElevenLabsVoice()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg> 测试语音合成</button>
           <div id="elevenlabsTestResult" style="margin-top:10px"></div>
         </div>
 
@@ -3774,8 +3727,8 @@
         <div class="form-group">
           <label class="form-label">角色发图片方式</label>
           <div style="display:flex;gap:8px">
-            <button type="button" id="roleImgModeDescribe" onclick="setRoleImgMode('describe')" style="flex:1;padding:10px;border-radius:10px;border:1px solid #E5E5EA;background:#F9F9F9;font-size:13px;cursor:pointer">📝 描述图片</button>
-            <button type="button" id="roleImgModeReal" onclick="setRoleImgMode('real')" style="flex:1;padding:10px;border-radius:10px;border:1px solid #E5E5EA;background:#F9F9F9;font-size:13px;cursor:pointer">🖼 真实图片</button>
+            <button type="button" id="roleImgModeDescribe" onclick="setRoleImgMode('describe')" style="flex:1;padding:10px;border-radius:10px;border:1px solid #E5E5EA;background:#F9F9F9;font-size:13px;cursor:pointer"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg> 描述图片</button>
+            <button type="button" id="roleImgModeReal" onclick="setRoleImgMode('real')" style="flex:1;padding:10px;border-radius:10px;border:1px solid #E5E5EA;background:#F9F9F9;font-size:13px;cursor:pointer"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> 真实图片</button>
           </div>
           <div class="form-hint" id="roleImgModeHint">描述图片：用文字“照片卡片”表现，无需任何配置，开箱即用；真实图片：调用「设置→图片生成API」真实出图，未配置接口时会自动回退描述图片。</div>
         </div>
@@ -3830,8 +3783,8 @@
 }"></textarea>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button class="btn-secondary" onclick="document.getElementById('pageCssFileInput').click()" style="flex:1;font-size:13px">📁 导入 JS</button>
-          <button class="btn-secondary" onclick="exportPageCssJs()" style="flex:1;font-size:13px">💾 导出 JS</button>
+          <button class="btn-secondary" onclick="document.getElementById('pageCssFileInput').click()" style="flex:1;font-size:13px"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg> 导入 JS</button>
+          <button class="btn-secondary" onclick="exportPageCssJs()" style="flex:1;font-size:13px"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 导出 JS</button>
         </div>
         <input type="file" id="pageCssFileInput" accept=".js,.txt,.css" style="display:none" onchange="importPageCssFile(event)">
         <div class="css-preview" id="pageCssPreview">
@@ -3867,8 +3820,8 @@
 }"></textarea>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button class="btn-secondary" onclick="document.getElementById('bubbleCssFileInput').click()" style="flex:1;font-size:13px">📁 导入 TXT</button>
-          <button class="btn-secondary" onclick="exportBubbleCssTxt()" style="flex:1;font-size:13px">💾 导出 TXT</button>
+          <button class="btn-secondary" onclick="document.getElementById('bubbleCssFileInput').click()" style="flex:1;font-size:13px"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg> 导入 TXT</button>
+          <button class="btn-secondary" onclick="exportBubbleCssTxt()" style="flex:1;font-size:13px"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 导出 TXT</button>
         </div>
         <input type="file" id="bubbleCssFileInput" accept=".txt,.css" style="display:none" onchange="importBubbleCssFile(event)">
         <div class="css-preview" id="bubbleCssPreview">
@@ -3939,16 +3892,16 @@
         </div>
         <!-- ===== 三模块切换 ===== -->
         <div style="display:flex;gap:0;margin-bottom:12px;border-radius:10px;overflow:hidden;border:1px solid #E5E5EA">
-          <div class="cw-tab-btn active" data-tab="file" onclick="cwSwitchTab('file')" style="flex:1;padding:10px 6px;text-align:center;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.2s">📄 导入文件</div>
-          <div class="cw-tab-btn" data-tab="image" onclick="cwSwitchTab('image')" style="flex:1;padding:10px 6px;text-align:center;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.2s;border-left:1px solid #E5E5EA;background:#F5F5F5;color:#8E8E93">🖼️ 导入图片</div>
-          <div class="cw-tab-btn" data-tab="text" onclick="cwSwitchTab('text')" style="flex:1;padding:10px 6px;text-align:center;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.2s;border-left:1px solid #E5E5EA;background:#F5F5F5;color:#8E8E93">📝 文案</div>
+          <div class="cw-tab-btn active" data-tab="file" onclick="cwSwitchTab('file')" style="flex:1;padding:10px 6px;text-align:center;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.2s"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 12.5 8 15l2 2.5"/><path d="m14 12.5 2 2.5-2 2.5"/></svg> 导入文件</div>
+          <div class="cw-tab-btn" data-tab="image" onclick="cwSwitchTab('image')" style="flex:1;padding:10px 6px;text-align:center;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.2s;border-left:1px solid #E5E5EA;background:#F5F5F5;color:#8E8E93"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> 导入图片</div>
+          <div class="cw-tab-btn" data-tab="text" onclick="cwSwitchTab('text')" style="flex:1;padding:10px 6px;text-align:center;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.2s;border-left:1px solid #E5E5EA;background:#F5F5F5;color:#8E8E93"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/></svg> 文案</div>
         </div>
 
         <!-- ===== 模块1：导入文件 ===== -->
         <div id="cwTabFile" class="cw-tab-content">
           <div class="form-group">
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-              <button class="btn-sm btn-mint" style="flex-shrink:0" onclick="cwUploadFile()">📄 上传文件</button>
+              <button class="btn-sm btn-mint" style="flex-shrink:0" onclick="cwUploadFile()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 12.5 8 15l2 2.5"/><path d="m14 12.5 2 2.5-2 2.5"/></svg> 上传文件</button>
               <span class="form-hint" style="margin:0">支持 .html / .htm / .txt / .css</span>
             </div>
             <div class="form-label" style="margin-bottom:4px">HTML 内容</div>
@@ -3966,8 +3919,8 @@
             <div class="form-label">背景图（铺满组件底层）</div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <input class="form-input" id="cwImageUrlInput" placeholder="URL 或上传" style="flex:1;min-width:100px" oninput="updateCustomWidgetPreview()">
-              <button class="btn-sm btn-mint" style="flex-shrink:0" onclick="cwUploadImage()">📷 上传</button>
-              <button class="btn-sm" style="flex-shrink:0;background:#E8DCF0;color:#7E6BA0" onclick="cwUploadImageWithCutout()">✂️ 抠图</button>
+              <button class="btn-sm btn-mint" style="flex-shrink:0" onclick="cwUploadImage()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg> 上传</button>
+              <button class="btn-sm" style="flex-shrink:0;background:#E8DCF0;color:#7E6BA0" onclick="cwUploadImageWithCutout()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg> 抠图</button>
               <button class="btn-sm" style="flex-shrink:0;background:#F3E3E9;color:#C97E96" onclick="document.getElementById('cwImageUrlInput').value='';document.getElementById('cwCutoutUrlInput').value='';updateCustomWidgetPreview()">清除</button>
             </div>
           </div>
@@ -3975,10 +3928,10 @@
             <div class="form-label">抠图层（叠加在背景图和照片上方，透明处露出下层）</div>
             <div style="display:flex;gap:8px;align-items:center">
               <input class="form-input" id="cwCutoutUrlInput" placeholder="抠图后的透明PNG" style="flex:1;min-width:100px" oninput="updateCustomWidgetPreview()">
-              <button class="btn-sm" style="flex-shrink:0;background:#E8DCF0;color:#7E6BA0" onclick="cwUploadImageWithCutout()">✂️ 上传抠图</button>
+              <button class="btn-sm" style="flex-shrink:0;background:#E8DCF0;color:#7E6BA0" onclick="cwUploadImageWithCutout()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg> 上传抠图</button>
               <button class="btn-sm" style="flex-shrink:0;background:#F3E3E9;color:#C97E96" onclick="document.getElementById('cwCutoutUrlInput').value='';updateCustomWidgetPreview()">清除</button>
             </div>
-            <div class="form-hint">上传图片后点击✂️抠图，点击空白背景区域自动去除</div>
+            <div class="form-hint">上传图片后点「抠图」，点击空白背景区域自动去除</div>
           </div>
           <div class="form-group">
             <div class="form-label">放照片位置（最多3个）</div>
@@ -4024,7 +3977,7 @@
           <div>正在抠图中…</div>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-          <button class="btn-sm" style="flex:1;background:#F3E3E9;color:#C97E96" onclick="cutoutUndo()">↺ 撤销</button>
+          <button class="btn-sm" style="flex:1;background:#F3E3E9;color:#C97E96" onclick="cutoutUndo()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg> 撤销</button>
           <button class="btn-sm" style="flex:1;background:#F3E3E9;color:#C97E96" onclick="cutoutReset()">重置</button>
         </div>
         <div class="form-hint" style="margin-bottom:8px;font-size:11px">容差越小越精确，越大去除范围越广</div>
@@ -4033,7 +3986,7 @@
           <input type="range" id="cutoutTolerance" min="10" max="100" value="40" style="flex:1" oninput="document.getElementById('cutoutTolVal').textContent=this.value">
           <span id="cutoutTolVal" style="min-width:30px;text-align:center;font-size:13px">40</span>
         </div>
-        <button class="btn-primary" onclick="cutoutConfirm()">✓ 确认使用</button>
+        <button class="btn-primary" onclick="cutoutConfirm()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> 确认使用</button>
         <button class="btn-secondary" onclick="closeModal('cutoutModal')">取消</button>
       </div>
     </div>
@@ -4084,9 +4037,9 @@
         <div class="modal-title">这张照片</div>
         <div class="modal-close" onclick="closeModal('hv2ImageModal')">×</div>
         <div class="form-hint" style="margin-bottom:12px">主屏幕上的照片区域可以随时更换</div>
-        <button class="btn-primary" onclick="hv2ImageAction('change')">📂 更换图片</button>
-        <button class="btn-secondary" onclick="hv2ImageAction('preview')">🔍 查看大图</button>
-        <button class="btn-secondary btn-danger" onclick="hv2ImageAction('remove')">🗑 移除图片</button>
+        <button class="btn-primary" onclick="hv2ImageAction('change')"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/></svg> 更换图片</button>
+        <button class="btn-secondary" onclick="hv2ImageAction('preview')"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg> 查看大图</button>
+        <button class="btn-secondary btn-danger" onclick="hv2ImageAction('remove')"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 移除图片</button>
       </div>
     </div>
 
@@ -4129,7 +4082,7 @@
         <div class="form-hint" style="margin-bottom:10px">选择预设渐变，或上传自己的图片作为壁纸</div>
         <div class="wallpaper-preset-grid" id="wallpaperPresetGrid"></div>
         <input type="file" id="homeWallpaperFileInput" accept="image/*" style="display:none" onchange="handleHomeWallpaperSelect(event)">
-        <button class="btn-secondary" style="margin-top:12px" onclick="document.getElementById('homeWallpaperFileInput').click()">📂 上传图片</button>
+        <button class="btn-secondary" style="margin-top:12px" onclick="document.getElementById('homeWallpaperFileInput').click()"><svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg> 上传图片</button>
         <button class="btn-secondary btn-danger" onclick="resetHomeWallpaper()">恢复默认</button>
       </div>
     </div>
@@ -4209,6 +4162,7 @@
           <label class="form-label">规则内容 <span style="font-size:10px;color:#C0B4BE">可编辑修改</span></label>
           <textarea class="form-input form-code" id="baseRulesInput" style="min-height:200px"></textarea>
         </div>
+        <div style="font-size:11px;color:#B3A0A9;line-height:1.6;margin:2px 0 10px">如果设置页显示“旧版·建议恢复默认”，说明本地存的还是旧版内置规则（你从没自己改过），点下面“恢复默认”即可载入优化后的新版；被替换的旧内容会备份在设置里，不会丢。</div>
         <button class="btn-primary" onclick="saveRules('base')">保存规则</button>
         <button class="btn-secondary" onclick="closeModal('baseRulesModal')">取消</button>
         <button class="btn-secondary btn-danger" onclick="resetRules('base')">恢复默认</button>
@@ -4272,12 +4226,12 @@
 
     <!-- ===== 记忆APP ===== -->
     <div class="view" id="view-memory">
-      <div class="app-header" style="background:rgba(20,18,22,0.9);border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div class="app-header" style="background:rgba(255,253,251,0.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(150,118,132,0.08)">
         <div class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24"><path d="M15.4 7.4L14 6l-6 6 6 6 1.4-1.4L10.8 12z" fill="#fff"></path></svg></div>
-        <div class="app-title" style="color:#fff">记忆</div>
+        <div class="app-title">记忆</div>
         <div style="width:32px"></div>
       </div>
-      <div style="flex:1;overflow-y:auto;background:#000;padding:16px" id="memoryScroll">
+      <div style="flex:1;overflow-y:auto;padding:16px" id="memoryScroll">
         <div class="memory-tabs" id="memoryTabs"></div>
         <div style="display:flex;gap:10px;margin-bottom:16px">
           <button class="memory-action-btn" onclick="summarizeMemories()" id="summarizeBtn">
@@ -4294,10 +4248,10 @@
           </button>
         </div>
         <div style="margin-bottom:12px;text-align:right">
-          <a href="javascript:void(0)" onclick="resetSummaryProgress()" style="color:#FF9500;font-size:13px;text-decoration:underline">重置总结进度</a>
+          <a href="javascript:void(0)" onclick="resetSummaryProgress()" style="color:#D9955B;font-size:13px;text-decoration:underline">重置总结进度</a>
         </div>
         <div id="memoryList"></div>
-        <div id="memoryEmpty" style="display:none;text-align:center;padding:60px 20px;color:#8E8E93">
+        <div id="memoryEmpty" style="display:none;text-align:center;padding:60px 20px;color:#B3A9AF">
           <div style="font-size:48px;margin-bottom:12px;opacity:0.3">🧠</div>
           <div style="font-size:15px;margin-bottom:6px">还没有记忆</div>
           <div style="font-size:12px">点击「总结记忆」让AI帮你提取回忆，或手动导入</div>
@@ -4658,11 +4612,11 @@
           <div class="modal-close" onclick="closeModal('memoryEditModal')">×</div>
         </div>
         <div style="padding:12px 0">
-          <textarea id="memoryEditInput" style="width:100%;min-height:160px;background:#2C2C2E;border:0.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:#fff;font-size:14px;line-height:1.6;resize:none;outline:none;font-family:inherit"></textarea>
+          <textarea id="memoryEditInput" style="width:100%;min-height:160px;background:#FBF7F6;border:1.5px solid rgba(170,132,150,0.14);border-radius:14px;padding:12px;color:#4E464C;font-size:14px;line-height:1.7;resize:none;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s,box-shadow .2s" onfocus="this.style.borderColor='rgba(244,154,180,0.5)';this.style.boxShadow='0 0 0 4px rgba(244,154,180,0.10)'" onblur="this.style.borderColor='rgba(170,132,150,0.14)';this.style.boxShadow='none'"></textarea>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn-secondary" style="flex:1" onclick="closeModal('memoryEditModal')">取消</button>
-          <button class="btn-primary" style="flex:1;background:#07C160;color:#fff" onclick="saveMemoryEdit()">保存</button>
+          <button class="btn-primary" style="flex:1;background:linear-gradient(135deg,#F7A3BC,#FFC6D8);color:#fff;box-shadow:0 4px 12px rgba(244,154,180,.24);text-shadow:0 1px 1px rgba(196,124,150,.25)" onclick="saveMemoryEdit()">保存</button>
         </div>
       </div>
     </div>
@@ -4731,11 +4685,11 @@
           <div class="modal-close" onclick="closeModal('manualMemoryModal')">×</div>
         </div>
         <div style="padding:12px 0">
-          <textarea id="manualMemoryInput" placeholder="输入记忆内容..." style="width:100%;min-height:160px;background:#2C2C2E;border:0.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:#fff;font-size:14px;line-height:1.6;resize:none;outline:none;font-family:inherit"></textarea>
+          <textarea id="manualMemoryInput" placeholder="输入记忆内容..." style="width:100%;min-height:160px;background:#FBF7F6;border:1.5px solid rgba(170,132,150,0.14);border-radius:14px;padding:12px;color:#4E464C;font-size:14px;line-height:1.7;resize:none;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s,box-shadow .2s" onfocus="this.style.borderColor='rgba(244,154,180,0.5)';this.style.boxShadow='0 0 0 4px rgba(244,154,180,0.10)'" onblur="this.style.borderColor='rgba(170,132,150,0.14)';this.style.boxShadow='none'"></textarea>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn-secondary" style="flex:1" onclick="closeModal('manualMemoryModal')">取消</button>
-          <button class="btn-primary" style="flex:1;background:#07C160;color:#fff" onclick="saveManualMemory()">保存</button>
+          <button class="btn-primary" style="flex:1;background:linear-gradient(135deg,#F7A3BC,#FFC6D8);color:#fff;box-shadow:0 4px 12px rgba(244,154,180,.24);text-shadow:0 1px 1px rgba(196,124,150,.25)" onclick="saveManualMemory()">保存</button>
         </div>
       </div>
     </div>
@@ -4850,11 +4804,11 @@
         </div>
         <div style="padding:12px 0">
           <div style="color:#8E8E93;font-size:12px;margin-bottom:8px">可编辑后保存，或直接保存</div>
-          <textarea id="memorySummaryInput" style="width:100%;min-height:200px;background:#2C2C2E;border:0.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;color:#fff;font-size:14px;line-height:1.6;resize:vertical;outline:none;font-family:inherit"></textarea>
+          <textarea id="memorySummaryInput" style="width:100%;min-height:200px;background:#FBF7F6;border:1.5px solid rgba(170,132,150,0.14);border-radius:14px;padding:12px;color:#4E464C;font-size:14px;line-height:1.7;resize:vertical;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s,box-shadow .2s" onfocus="this.style.borderColor='rgba(244,154,180,0.5)';this.style.boxShadow='0 0 0 4px rgba(244,154,180,0.10)'" onblur="this.style.borderColor='rgba(170,132,150,0.14)';this.style.boxShadow='none'"></textarea>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn-secondary" style="flex:1" onclick="closeModal('memorySummaryModal')">取消</button>
-          <button class="btn-primary" style="flex:1;background:#07C160;color:#fff" onclick="saveSummaryMemory()">保存记忆</button>
+          <button class="btn-primary" style="flex:1;background:linear-gradient(135deg,#F7A3BC,#FFC6D8);color:#fff;box-shadow:0 4px 12px rgba(244,154,180,.24);text-shadow:0 1px 1px rgba(196,124,150,.25)" onclick="saveSummaryMemory()">保存记忆</button>
         </div>
       </div>
     </div>
@@ -4930,11 +4884,11 @@
   
 <div id="socialForumOverlay" class="sf-overlay">
   <div class="sf-nav-bar">
+    <button class="sf-nav-btn" id="sfCloseBtn" type="button">✕</button>
     <button class="sf-nav-avatar" id="sfNavAvatar" type="button"></button>
     <div class="sf-nav-title">论坛</div>
     <div class="sf-nav-actions">
       <button class="sf-nav-btn" id="sfRefreshBtn" type="button">↺</button>
-      <button class="sf-nav-btn" id="sfCloseBtn" type="button">✕</button>
     </div>
   </div>
   <div class="sf-content" id="sfContent">
@@ -5097,12 +5051,12 @@
 <div id="doujinForumOverlay" class="df-overlay">
   <div class="df-top-header">
     <div class="df-header-top">
+      <button class="df-header-btn" id="dfCloseBtn" type="button">✕</button>
       <button class="df-nav-avatar" id="dfNavAvatar" type="button"></button>
       <div class="df-logo" id="dfLogo">同人论坛</div>
       <div class="df-header-actions">
         <button class="df-header-btn" id="dfRefreshBtn" type="button">⟳</button>
         <button class="df-comm-gen-btn" id="dfCommGenBtn" type="button" style="display:none">✨ 生成</button>
-        <button class="df-header-btn" id="dfCloseBtn" type="button">✕</button>
       </div>
     </div>
     <div class="df-tag-nav"><div class="df-tag-nav-content" id="dfTagNav"></div></div>
@@ -5563,11 +5517,11 @@
   <div class="rc-content">
     <div class="rc-graph-wrap" id="rcGraphWrap"></div>
     <div class="rc-legend">
-      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#E74C3C"></span>恋人</span>
-      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#FF6B9D"></span>暧昧</span>
-      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#4A90D9"></span>朋友</span>
-      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#8E8E93"></span>认识</span>
-      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#34C759"></span>家人</span>
+      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#E0708A"></span>恋人</span>
+      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#F09BB8"></span>暧昧</span>
+      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#7FA8D8"></span>朋友</span>
+      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#ABA6B0"></span>认识</span>
+      <span class="rc-legend-item"><span class="rc-legend-dot" style="background:#7CC79B"></span>家人</span>
     </div>
     <div class="rc-hint" id="rcHint">点击节点选择，再点击另一个节点查看关系</div>
     <div class="rc-gen-row">
@@ -5625,7 +5579,7 @@
 </div></div><!-- /phone-screen -->
 <div class="modal-overlay" id="ruaErrorOverlay" style="z-index: 10000;"><div class="modal-sheet rua-err-sheet"><div class="modal-handle"></div><div class="rua-err-head"><span class="rua-err-icon"></span><div class="rua-err-title"></div></div><div class="rua-err-ctx"></div><div class="rua-err-summary"></div><div class="rua-err-advice"></div><details class="rua-err-tech"><summary>技术详情（反馈给开发者时点这里）</summary><pre></pre></details><div class="rua-err-btns"><button class="btn-secondary" data-act="copy">复制详情</button><button class="btn-primary" data-act="retry" style="display:none">重试</button><button class="btn-primary" data-act="ok">我知道了</button></div></div></div><div class="modal-overlay" id="ruaErrorLogOverlay" style="z-index: 10000;"><div class="modal-sheet rua-err-sheet"><div class="modal-handle"></div><div class="modal-title">问题诊断 · 错误日志</div><div class="modal-close" data-act="closelog">×</div><div style="font-size:12px;opacity:.6;line-height:1.6;margin:4px 2px 10px">这里记录最近 50 条异常。遇到问题时可点「全部复制」发给开发者。</div><div id="ruaErrorLogList"></div><div class="rua-err-btns" style="margin-top:6px"><button class="btn-secondary" data-act="copyall">全部复制</button><button class="btn-secondary" data-act="clear">清空日志</button><button class="btn-primary" data-act="closelog2">关闭</button></div></div></div></div><!-- /phone-frame -->
 
-<script src="js/app-02.js?v=20261007wp"></script>
+<script src="js/app-02.js?v=20261009bubble"></script>
 
 <script src="js/world-system.js?v=20260905rg"></script>
 <script src="js/relation-photo.js?v=20260905rg"></script>
