@@ -94,6 +94,8 @@ jobs:
             console.log('动态加载样式自检通过 ✓');
           "
           grep -q 'js/rua-diag.js' www/index.html
+          # ⚠ 防回归自检：网易云直连的原生接口名必须出现在 JS 里，否则 Java 层取回的数据没人用
+          grep -q 'AndroidNetease' www/js/app-06.js
           # ⚠ 防回归自检：登录浮层必须留在 #phoneScreen 内部。
           # 真机（APK/窄屏/触摸设备）命中 @media (max-width:768px) 与 (hover:none) and (pointer:coarse)，
           # 会把 .phone-frame 变成 position:fixed + z-index:9998 !important；浮层一旦被挪到 document.body，
@@ -145,12 +147,13 @@ jobs:
           npx cap sync android
           test -f android/app/src/main/java/com/rua/phone/MainActivity.java
 
-      - name: 注入原生代码（沉浸式全屏 + 文件导出）
+      - name: 注入原生代码（沉浸式全屏 + 文件导出 + 网易云直连）
         run: |
           set -e
           APP=android/app/src/main/java/com/rua/phone
           cp -f android-overlay/java/com/rua/phone/MainActivity.java "$APP/MainActivity.java"
           cp -f android-overlay/java/com/rua/phone/AndroidFileSaver.java "$APP/AndroidFileSaver.java"
+          cp -f android-overlay/java/com/rua/phone/AndroidNeteaseProxy.java "$APP/AndroidNeteaseProxy.java"
           cp -f android-overlay/res/values/styles.xml android/app/src/main/res/values/styles.xml
           grep -q 'class MainActivity extends BridgeActivity' "$APP/MainActivity.java"
           grep -q 'AndroidFileSaver' "$APP/MainActivity.java"
@@ -158,6 +161,14 @@ jobs:
           grep -q 'applyEdgeToEdge' "$APP/MainActivity.java"
           grep -q 'setDecorFitsSystemWindows' "$APP/MainActivity.java"
           grep -q 'WindowInsets.Type.ime()' "$APP/MainActivity.java"
+          # ⚠ 防回归自检：网易云「原生直连」接口必须真的随包发布。
+          # 官方接口实测返回 200 但响应头没有 Access-Control-Allow-Origin，WebView 一律按 CORS 拦掉，
+          # 少了这个原生接口，APK 里网易云的推荐/排行榜/搜索/歌词会静默空白（控制台只有一条报错）。
+          grep -q 'AndroidNetease' "$APP/MainActivity.java"
+          grep -q 'addJavascriptInterface(new AndroidNeteaseProxy' "$APP/MainActivity.java"
+          grep -q 'JavascriptInterface' "$APP/AndroidNeteaseProxy.java"
+          grep -q 'music.163.com' "$APP/AndroidNeteaseProxy.java"
+          grep -q 'super.onCreate(savedInstanceState);' "$APP/MainActivity.java"
           grep -q 'AppTheme.NoActionBar' android/app/src/main/res/values/styles.xml
           grep -q 'windowFullscreen' android/app/src/main/res/values/styles.xml
           echo '原生代码注入完成'

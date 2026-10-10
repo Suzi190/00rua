@@ -11,6 +11,8 @@
  *   · env(safe-area-inset-*) 的实测值（用探针元素量的）
  *   · AndroidFileSaver 桥是否可用；「测试导出」会真的写一个 txt 到系统「下载」目录，
  *     并把原生返回的 "OK: ..." / "ERROR: ..." 原样显示出来
+ *   · AndroidNetease 直连桥是否可用；「测试网易云」会真的通过原生直连请求一次官方接口，
+ *     把耗时、正文大小、热评条数显示出来（这是「APK 里网易云到底通没通」的最快判据）
  */
 (function () {
   'use strict';
@@ -77,6 +79,7 @@
     L.push('UA ' + navigator.userAgent);
     L.push('Capacitor=' + (typeof window.Capacitor !== 'undefined' ? 'yes' : 'no')
       + ' AndroidFileSaver=' + (typeof window.AndroidFileSaver !== 'undefined' ? 'yes' : 'no')
+      + ' AndroidNetease=' + (typeof window.AndroidNetease !== 'undefined' ? 'yes' : 'no')
       + ' dpr=' + window.devicePixelRatio);
 
     L.push('');
@@ -114,6 +117,15 @@
     L.push('typeof AndroidFileSaver = ' + (typeof window.AndroidFileSaver));
     L.push('saveTextFile  = ' + (window.AndroidFileSaver ? typeof window.AndroidFileSaver.saveTextFile : '无此对象'));
     L.push('saveBase64File= ' + (window.AndroidFileSaver ? typeof window.AndroidFileSaver.saveBase64File : '无此对象'));
+
+    L.push('');
+    L.push('== 网易云数据源 ==');
+    L.push('typeof AndroidNetease = ' + (typeof window.AndroidNetease));
+    L.push('getAsync        = ' + (window.AndroidNetease ? typeof window.AndroidNetease.getAsync : '无此对象'));
+    L.push('neFetch / neClassify / neAdapt = ' + (typeof window.neFetch)
+      + ' / ' + (typeof window.neClassify) + ' / ' + (typeof window.neAdapt));
+    L.push('（有 getAsync → APK 走 L0 原生直连官方接口，含歌词翻译与热评；'
+      + '没有则自动降级 L1/L2/L3 第三方镜像源，歌单/搜索/歌词仍在）');
 
     L.push('');
     L.push('== 日间/夜间主题样式 ==');
@@ -192,6 +204,7 @@
     bar.setAttribute('style', 'display:flex;gap:6px;flex-shrink:0;padding-top:8px;flex-wrap:wrap;');
     bar.appendChild(mkBtn('刷新', render, 'flex:1 1 0;min-width:68px;'));
     bar.appendChild(mkBtn('测试导出', testExport, 'flex:1 1 0;min-width:68px;'));
+    bar.appendChild(mkBtn('测试网易云', testNetease, 'flex:1 1 0;min-width:68px;background:#4A90D9;'));
     bar.appendChild(mkBtn('复制全部', copyAll, 'flex:1 1 0;min-width:68px;'));
     bar.appendChild(mkBtn('复制导出结果', copyTip, 'flex:1 1 0;min-width:68px;background:#7A5C6B;'));
 
@@ -300,6 +313,49 @@
 
     tip('已请求保存：' + name + '\n原生返回：' + ret + '\n'
       + '（返回 OK: 之后，打开手机「文件管理 → 下载」应能看到这个文件）');
+  }
+
+  /* ---------- 网易云原生直连实测 ---------- */
+
+  // 真机判断「APK 里的网易云到底通没通」的最快方式：直接走原生桥请求一次官方接口。
+  // 复用 app-06.js 的 neNativeGet（就是应用实际在用的那条通道，自带 token 与超时管理），
+  // 所以这里测通了，就代表应用里的推荐/排行榜/歌词/热评都能拿到数据。
+  function testNetease() {
+    buildPanel();
+
+    var api = window.AndroidNetease;
+    if (!api || typeof api.getAsync !== 'function') {
+      tip('❌ AndroidNetease 不可用：typeof = ' + (typeof api)
+        + '，getAsync = ' + (api ? typeof api.getAsync : '无此对象')
+        + '\n（说明原生注入失败，或当前不在 APK 里运行）\n'
+        + '此时网易云会自动降级到第三方镜像源：歌单/搜索/歌词/播放仍有，'
+        + '但拿不到歌词翻译和热评。');
+      return;
+    }
+    if (typeof window.neNativeGet !== 'function') {
+      tip('❌ 找不到 neNativeGet（js/app-06.js 可能没加载成功）');
+      return;
+    }
+
+    var url = 'https://music.163.com/api/v1/resource/comments/R_SO_4_347230?limit=1';
+    var t0 = Date.now();
+    tip('正在通过原生直连请求官方接口…\n' + url);
+
+    window.neNativeGet(url).then(function (r) {
+      var n = -1;
+      try {
+        var d = r.data || {};
+        var list = d.hotComments || (d.data && d.data.hotComments) || [];
+        n = list.length;
+      } catch (e) { /* 结构不同也不影响结论 */ }
+      tip('✅ 原生直连成功（' + (Date.now() - t0) + 'ms）\n'
+        + '正文 ' + r.text.length + ' 字节，热评 ' + (n < 0 ? '解析失败' : n + ' 条') + '\n'
+        + '说明：APK 里的网易云正在走 L0 原生直连官方接口，歌词翻译与热评都可用。');
+    }, function (err) {
+      tip('❌ 原生直连失败：' + ((err && err.message) ? err.message : err) + '\n'
+        + '（应用会自动降级到镜像源 L1/L2/L3：歌单/搜索/歌词/播放仍有，'
+        + '但没有歌词翻译和热评）');
+    });
   }
   /* ---------- 顶部连点 5 下打开 ---------- */
 

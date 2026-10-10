@@ -1868,54 +1868,329 @@ function neImgOnError(img, fallbackText) {
   img.style.background = '#333';
 }
 
-// CORS代理列表（用于绕过网易云音乐API跨域限制，带逐个回退）
-// 2026-08更新：cors.eu.org限流、corsproxy.io需付费、codetabs不稳定
-// 改用 cors.sh（基于Cloudflare Workers，稳定）作为首选
-var NE_PROXY_LIST = [
-  function(url) { return 'https://proxy.cors.sh/' + url; },
-  function(url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); },
-  function(url) { return 'https://cors.eu.org/' + url; },
-  function(url) { return 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url); }
+// ===== 网易云数据源路由（2026-10 重写：原生直连 + 镜像兜底）=====
+// 实测结论（别再走回头路）：
+//   1) 官方接口直连 music.163.com/api/... 本身完全正常（HTTP 200、数据完整），
+//      但响应头里没有 Access-Control-Allow-Origin → 浏览器/WebView 一律按 CORS 拦掉，
+//      JS 一个字都拿不到（控制台只有一条 CORS 报错）。所以纯网页侧「直连」永远无解。
+//   2) 过去用的 4 个公共 CORS 代理已全部失效：proxy.cors.sh(连接被关)、
+//      api.allorigins.win(超时)、cors.eu.org(429)、api.codetabs.com(超时)；
+//      另测 corsproxy.io(403)、test.cors.workers.dev(429) 也不可用。
+//   3) APK 里有原生直连接口 window.AndroidNetease（见 AndroidNeteaseProxy.java），
+//      它走原生网络栈、不受 CORS 约束，是唯一能拿到「歌词翻译」和「热评」的通道。
+//
+// 取值优先级（前一个失败自动换下一个，全挂才回调错误）：
+//   L0 window.AndroidNetease 原生直连官方 API —— 仅 APK 内可用，数据最全
+//   L1 api.qijieya.cn/meting —— 第三方镜像，歌单/搜索/歌词/封面/音频齐全
+//   L2 api.injahow.cn/meting —— 备用镜像（不支持搜索）
+//   L3 music-api.gdstudio.xyz —— 备用镜像（有搜索，但封面要二次解析）
+//   L4 fetch 直连 —— 最后兜底（将来若同源部署才会命中）
+//
+// ★ 对外契约完全不变：调用方照旧传 music.163.com 的原始 URL，回调里拿到的照旧是官方那种
+//   原生结构（result.tracks / result.songs / lrc.lyric / songs / hotComments …）。
+//   镜像那套完全不同的结构在 neAdapt 里被翻译回原生结构，所以 11 个调用点、渲染、歌词解析、
+//   评论渲染、缓存、播放器一行都不用改。
+// ★ 全程不碰 window.fetch：AI 聊天/MCP 的流式响应（res.body.getReader()、SSE）零影响。
+var NE_SOURCES = [
+  { name: 'qijieya',  search: true,  api: 'https://api.qijieya.cn/meting/?server=netease' },
+  { name: 'injahow',  search: false, api: 'https://api.injahow.cn/meting/?server=netease' },
+  { name: 'gdstudio', search: true,  api: 'https://music-api.gdstudio.xyz/api.php?source=netease' }
 ];
+// GD Studio 的封面要再查一次 types=pic 才能拿到真实 CDN 地址
+var NE_GD_PIC_API = 'https://music-api.gdstudio.xyz/api.php?types=pic&source=netease&id=';
 
-// 通过代理获取网易云音乐API数据
-function neFetch(url, callback) {
-  // 先尝试直连（短超时），失败再用代理
-  fetch(url, { method: 'GET', mode: 'cors', signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined })
-    .then(function(res) { if (!res.ok) throw new Error('direct failed'); return res.text(); })
-    .then(function(text) {
-      if (!text || text.length < 2) throw new Error('empty');
-      try { var data = JSON.parse(text); callback(data, null); return; }
-      catch(e) { throw new Error('parse error'); }
-    })
-    .catch(function() {
-      // 直连失败，逐个尝试代理
-      tryProxy(0);
-    });
+var NE_DEAD = {};                 // 临时拉黑的源：{名字: 解封时间戳}
+var NE_DEAD_TTL = 5 * 60 * 1000;  // 拉黑 5 分钟，避免每次都往挂掉的源上白等
+var NE_TIMEOUT_MS = 8000;         // 镜像 / 直连单次超时
+var NE_NATIVE_TIMEOUT_MS = 12000; // 原生回调超时（超过就降级到镜像）
 
-  function tryProxy(i) {
-    if (i >= NE_PROXY_LIST.length) { callback(null, 'all proxies failed'); return; }
-    var proxyUrl = NE_PROXY_LIST[i](url);
-    fetch(proxyUrl, { method: 'GET', signal: AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined })
-      .then(function(res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.text();
-      })
-      .then(function(text) {
-        if (!text || text.length < 2) { tryProxy(i + 1); return; }
-        try {
-          var data = JSON.parse(text);
-          callback(data, null);
-        } catch(e) {
-          tryProxy(i + 1);
-        }
-      })
-      .catch(function(err) { tryProxy(i + 1); });
+// 失效源临时拉黑
+function neSourceDead(name) {
+  var until = NE_DEAD[name];
+  if (!until) return false;
+  if (Date.now() > until) { delete NE_DEAD[name]; return false; }
+  return true;
+}
+function neMarkDead(name) { NE_DEAD[name] = Date.now() + NE_DEAD_TTL; }
+
+// 带超时的文本请求（AbortSignal.timeout 在旧 WebView 上不存在，兜底用 AbortController）
+function neFetchText(url, timeoutMs) {
+  var opts = { method: 'GET', mode: 'cors' };
+  var timer = null;
+  if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+    opts.signal = AbortSignal.timeout(timeoutMs);
+  } else if (typeof AbortController !== 'undefined') {
+    var ctrl = new AbortController();
+    opts.signal = ctrl.signal;
+    timer = setTimeout(function() { try { ctrl.abort(); } catch(e) {} }, timeoutMs);
   }
+  return fetch(url, opts).then(function(res) {
+    if (timer) clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.text();
+  }, function(err) {
+    if (timer) clearTimeout(timer);
+    throw err;
+  });
+}
+
+// ===== L0：APK 原生直连 =====
+// Java 侧 AndroidNeteaseProxy.getAsync(url, token) 在后台线程取完数据后，
+// 用 evaluateJavascript 回调 window.__ruaNeteaseCb(token, payload)。
+// payload = {"ok":true,"status":200,"body":"<官方原始响应>"} 或 {"ok":false,"error":"..."}
+var _neNativeSeq = 0;
+var _neNativePending = {};
+
+window.__ruaNeteaseCb = function(token, payload) {
+  var p = _neNativePending[token];
+  if (!p) return;                       // 已超时/已被清理，丢弃
+  delete _neNativePending[token];
+  if (p.timer) clearTimeout(p.timer);
+  var env;
+  try { env = JSON.parse(payload); } catch(e) { p.reject(new Error('原生返回值不是 JSON')); return; }
+  if (!env || !env.ok) { p.reject(new Error((env && env.error) || '原生请求失败')); return; }
+  var text = env.body || '';
+  if (text.length < 2) { p.reject(new Error('原生响应为空')); return; }
+  try { p.resolve({ text: text, data: JSON.parse(text) }); }
+  catch(e) { p.reject(new Error('原生响应不是 JSON')); }
+};
+
+// 网页侧调用原生直连；在浏览器里跑时 window.AndroidNetease 不存在 → 立刻失败并降级到镜像
+function neNativeGet(url) {
+  return new Promise(function(resolve, reject) {
+    var api = (typeof window !== 'undefined') ? window.AndroidNetease : null;
+    if (!api || typeof api.getAsync !== 'function') { reject(new Error('无原生直连桥（非 APK 环境）')); return; }
+    var token = 'n' + (++_neNativeSeq) + '_' + Date.now().toString(36);
+    var entry = { resolve: resolve, reject: reject, timer: null };
+    entry.timer = setTimeout(function() {
+      if (_neNativePending[token]) {
+        delete _neNativePending[token];
+        reject(new Error('原生直连超时'));
+      }
+    }, NE_NATIVE_TIMEOUT_MS);
+    _neNativePending[token] = entry;
+    try { api.getAsync(url, token); }
+    catch(e) { delete _neNativePending[token]; clearTimeout(entry.timer); reject(e); }
+  });
+}
+
+// ===== 请求分类：只认这 5 类官方接口 =====
+// 返回 null 表示「不认识的接口」→ 交给 L4 直连兜底（保持原行为）
+function neClassify(url) {
+  var m = url.match(/\/api\/playlist\/detail\?id=(\d+)/);
+  if (m) return { op: 'playlist', id: m[1] };
+  m = url.match(/\/api\/search\/get\?s=([^&]*)/);
+  if (m) {
+    var lm = url.match(/[?&]limit=(\d+)/);
+    return { op: 'search', kw: decodeURIComponent(m[1]), limit: lm ? parseInt(lm[1], 10) : 30 };
+  }
+  m = url.match(/\/api\/song\/lyric\?id=(\d+)/);
+  if (m) return { op: 'lyric', id: m[1] };
+  m = url.match(/\/api\/song\/detail\?ids=\[([^\]]+)\]/);
+  if (m) return { op: 'songdetail', ids: m[1].split(',') };
+  m = url.match(/\/api\/v1\/resource\/comments\/R_SO_4_(\d+)/);
+  if (m) return { op: 'comments', id: m[1] };
+  return null;
+}
+
+// ===== 镜像响应 → 官方原生结构 =====
+// Meting 单曲：{name, artist, url, pic, lrc}，真实歌曲 ID 藏在 url / lrc 的 &id= 里
+function neMirrorSongId(item) {
+  var raw = String((item && (item.url || item.lrc)) || '');
+  var m = raw.match(/[?&]id=(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function neMirrorTrack(item) {
+  return {
+    id: neMirrorSongId(item),
+    name: (item && item.name) || '未知歌曲',
+    artists: [{ name: (item && item.artist) || '未知歌手' }],
+    album: { picUrl: (item && item.pic) || '' },
+    duration: 0
+  };
+}
+
+// GD Studio 单曲：{id, name, artist:[...], pic_id}；封面要再查一次 types=pic 才有真实地址
+function neGdTrack(item) {
+  var names = (item && item.artist) || [];
+  if (typeof names === 'string') names = [names];
+  if (!names.length) names = ['未知歌手'];
+  return {
+    id: parseInt(item.id, 10) || 0,
+    name: item.name || '未知歌曲',
+    artists: names.map(function(n) { return { name: n }; }),
+    album: { picUrl: '' },
+    duration: 0,
+    _gdPicId: item.pic_id || ''
+  };
+}
+
+// 把官方请求翻译成某个镜像的 URL；该源不支持这个类型时返回 null
+function neMirrorUrl(src, spec) {
+  if (spec.op === 'playlist') return src.api + '&type=playlist&id=' + encodeURIComponent(spec.id);
+  if (spec.op === 'lyric') {
+    return src.name === 'gdstudio'
+      ? src.api + '&types=lyric&id=' + encodeURIComponent(spec.id)
+      : src.api + '&type=lrc&id=' + encodeURIComponent(spec.id);
+  }
+  if (spec.op === 'search') {
+    if (!src.search) return null;   // injahow 不支持搜索
+    return src.name === 'gdstudio'
+      ? src.api + '&types=search&name=' + encodeURIComponent(spec.kw) + '&count=' + spec.limit + '&pages=1'
+      : src.api + '&type=search&id=' + encodeURIComponent(spec.kw);
+  }
+  // 评论：所有镜像都没这个接口，只有 APK 的原生直连能拿到。
+  // song/detail：Meting 不支持多 id（实测返回 {"error":"unknown song"}），GD Studio 也没这接口；
+  //   它只在「搜索结果缺封面」时才触发，而镜像的歌单/搜索本来就带 pic，
+  //   所以拿不到就保留 🎵 占位图，不做无意义的重试风暴。
+  return null;
+}
+
+// ===== 镜像响应 → 官方原生结构（解析不出来就抛错，交给下一个源）=====
+// 注意：返回值可能是 Promise（GD Studio 要补封面），调用方已用 Promise.resolve() 包了一层
+function neAdapt(src, spec, text) {
+  if (spec.op === 'lyric') {
+    // Meting 的 lrc 接口直接返回 LRC 纯文本；GD Studio 返回 {"lyric":"..."}
+    var lrc = String(text || '').replace(/^\uFEFF/, '').trim();
+    if (src.name === 'gdstudio') {
+      try { var obj = JSON.parse(lrc); lrc = String((obj && (obj.lyric || obj.lrc)) || '').trim(); }
+      catch(e) { lrc = ''; }
+    }
+    if (!lrc) throw new Error('镜像歌词为空');
+    if (lrc.indexOf('[') === -1) throw new Error('镜像返回的不是歌词');
+    // 不带 tlyric（镜像不给翻译）：只有 APK 的原生直连才拿得到翻译
+    return { lrc: { lyric: lrc } };
+  }
+
+  var arr = JSON.parse(text);
+  if (!Array.isArray(arr)) throw new Error('镜像返回结构异常');
+
+  if (spec.op === 'playlist') {
+    var tracks = arr.map(neMirrorTrack).filter(function(t) { return t.id; });
+    if (!tracks.length) throw new Error('镜像歌单为空');
+    return { result: { tracks: tracks } };
+  }
+
+  if (spec.op === 'search') {
+    var songs = arr.map(src.name === 'gdstudio' ? neGdTrack : neMirrorTrack)
+                   .filter(function(t) { return t.id; });
+    if (!songs.length) throw new Error('镜像搜索为空');
+    if (src.name !== 'gdstudio') return { result: { songs: songs } };
+    // GD Studio 的搜索只给 pic_id，要再查一次才拿得到真实封面
+    return neGdFillCovers(songs).then(function() { return { result: { songs: songs } }; });
+  }
+
+  throw new Error('不支持的请求类型：' + spec.op);
+}
+
+// GD Studio：并发把前 12 首的封面解析成真实 CDN 地址（失败就留空，页面显示 🎵 占位）
+function neGdFillCovers(songs) {
+  var need = songs.filter(function(s) { return s._gdPicId; }).slice(0, 12);
+  if (!need.length) return Promise.resolve();
+  return Promise.all(need.map(function(s) {
+    return neFetchText(NE_GD_PIC_API + encodeURIComponent(s._gdPicId), NE_TIMEOUT_MS)
+      .then(function(txt) {
+        var o = JSON.parse(txt);
+        // 去掉它自带的 ?param=300y300，交给 neImgUrl 按需要统一加尺寸
+        if (o && o.url) s.album.picUrl = String(o.url).split('?')[0];
+      })
+      .catch(function() {})
+      .then(function() { delete s._gdPicId; });
+  }));
+}
+// 获取网易云数据：L0 原生直连 → L1/L2/L3 镜像 → L4 直连兜底
+// 签名与回调契约和以前完全一致：neFetch(url, function(data, err) {...})
+function neFetch(url, callback) {
+  var spec = neClassify(url);
+  var finished = false;
+  // 多源竞争时保证只有一个结果回调给业务代码（原生回调晚到也不会覆盖镜像结果）
+  function finish(data, err) { if (finished) return; finished = true; callback(data, err); }
+
+  // L4 直连兜底（官方接口本身好好的，只是不发 CORS 头；将来同源部署就会命中）
+  function directFallback() {
+    neFetchText(url, NE_TIMEOUT_MS)
+      .then(function(text) {
+        if (!text || text.length < 2) throw new Error('空响应');
+        finish(JSON.parse(text), null);
+      })
+      .catch(function() { finish(null, '所有网易云数据源均不可用'); });
+  }
+
+  // 不认识的接口：保持原行为，直接走直连
+  if (!spec) { directFallback(); return; }
+
+  // 备好镜像队列：跳过被拉黑的源 / 不支持该类型的源
+  var queue = [];
+  NE_SOURCES.forEach(function(src) {
+    if (neSourceDead(src.name)) return;
+    var mirrorUrl = neMirrorUrl(src, spec);
+    if (mirrorUrl) queue.push({ src: src, url: mirrorUrl });
+  });
+
+  function tryMirror(i) {
+    if (i >= queue.length) { directFallback(); return; }
+    var item = queue[i];
+    neFetchText(item.url, NE_TIMEOUT_MS)
+      .then(
+        function(text) {
+          // 内容层失败（源是好的，只是这次没这首的数据）不能拉黑源，所以打标记区分
+          return Promise.resolve()
+            .then(function() { return neAdapt(item.src, spec, text); })
+            .catch(function(err) {
+              var e = (err instanceof Error) ? err : new Error(String(err));
+              e.neContentFail = true;
+              throw e;
+            });
+        },
+        function(err) { throw (err instanceof Error) ? err : new Error(String(err)); }
+      )
+      .then(function(data) { finish(data, null); })
+      .catch(function(err) {
+        // 只有「连不上 / 超时 / HTTP 错误」才拉黑这个源
+        if (!err || !err.neContentFail) neMarkDead(item.src.name);
+        tryMirror(i + 1);
+      });
+  }
+
+  // L0：原生直连官方 API（数据最全：带歌词翻译、带热评；非 APK 环境会立刻失败）
+  neNativeGet(url)
+    .then(function(r) { finish(r.data, null); })
+    .catch(function() { tryMirror(0); });
 }
 
 // 播放器状态
 var _nePlayer = { audio: null, playlist: [], currentIndex: -1, isPlaying: false, currentSong: null, context: 'hot' };
+
+// ===== 音频地址与兜底（2026-10）=====
+// 主源仍是官方 outer 链接：capacitor.config.json 已开 allowMixedContent，它 302 到
+// http:// CDN 也能正常播（<audio> 播放不需要 CORS）。
+// 但实测版权/VIP 歌曲官方会直接 302 到 /404（347230 海阔天空、186016 晴天都是），
+// 而镜像的 type=url 对 347230 实测能正常播放 → 失败时换镜像直链再试一次，
+// 两个源都失败才认为这首歌真的放不了。
+var _neAudioRetried = 0;   // 已经兜底过的歌曲 ID，防止「官方 → 镜像 → 官方」无限重试
+
+function neAudioOfficialUrl(songId) {
+  return 'https://music.163.com/song/media/outer/url?id=' + songId + '.mp3';
+}
+function neAudioMirrorUrl(songId) {
+  return NE_SOURCES[0].api + '&type=url&id=' + encodeURIComponent(songId);
+}
+
+// 播放失败 → 换镜像直链再试一次。返回 true 表示「已接管重试，UI 先别报错」；
+// 返回 false 表示已经兜过底/参数不合法，调用方可以放心显示失败状态。
+function neAudioRetry(song) {
+  if (!song || !song.id || _neAudioRetried === song.id) return false;
+  var audio = _nePlayer.audio;
+  if (!audio) return false;
+  _neAudioRetried = song.id;
+  audio.src = neAudioMirrorUrl(song.id);
+  audio.play().then(
+    function() { neSetPlayIcon(true); _nePlayer.isPlaying = true; neRefreshListHighlight(); },
+    function() { neSetPlayIcon(false); _nePlayer.isPlaying = false; neRefreshListHighlight(); }
+  );
+  return true;
+}
 // 各列表独立存储，避免互相覆盖
 var _neHotSongs = [];   // 热门歌曲列表
 var _neSearchResults = []; // 搜索结果列表
@@ -1943,6 +2218,10 @@ function openNeteaseApp() {
       if (totalEl) totalEl.textContent = neFormatTime(_nePlayer.audio.duration);
     });
     _nePlayer.audio.addEventListener('error', function() {
+      // 当前音源加载失败（版权/VIP 限制、链接失效）→ 先换镜像直链再试一次
+      if (neAudioRetry(_nePlayer.currentSong)) return;
+      // 重试已经在播了就别把播放状态打回未播放（error 事件和 play().catch 会同时触发）
+      if (_nePlayer.audio && !_nePlayer.audio.paused) return;
       neSetPlayIcon(false); _nePlayer.isPlaying = false;
       neRefreshListHighlight();
     });
@@ -2172,11 +2451,16 @@ function nePlaySong(song) {
   neSetPlayIcon(true);
   // 播放
   var audio = _nePlayer.audio;
-  audio.src = 'https://music.163.com/song/media/outer/url?id=' + song.id + '.mp3';
+  _neAudioRetried = 0;   // 换歌了，重新允许一次镜像兜底
+  audio.src = neAudioOfficialUrl(song.id);
   audio.play().catch(function(e) {
-    showToast('播放失败，部分歌曲需要VIP');
-    neSetPlayIcon(false); _nePlayer.isPlaying = false;
-    neRefreshListHighlight();
+    // 官方链接放不了（版权/VIP）→ 先换镜像直链再试一次，别急着报「播放失败」
+    if (neAudioRetry(song)) return;
+    if (audio.paused) {
+      showToast('播放失败，部分歌曲需要VIP');
+      neSetPlayIcon(false); _nePlayer.isPlaying = false;
+      neRefreshListHighlight();
+    }
   });
   // 更新列表高亮
   neRefreshListHighlight();

@@ -8517,6 +8517,33 @@ function generateCharWxId(name, persona) {
   persona = persona || '';
   var lowerPersona = persona.toLowerCase();
 
+  // 汉字→拼音映射（关键词转前缀 / 名字首字母兜底共用）
+  // 必须定义在函数顶层：此前它定义在 if (keywords) 分支内，当人设没匹配到
+  // 关键词时该分支被跳过，后面兜底取名字首字母会对 undefined 取属性，
+  // 抛出 "Cannot read properties of undefined (reading '小')"。
+  var pinyinMap = {
+    '大':'da','小':'xiao','老':'lao','少':'shao','美':'mei','帅':'shuai','酷':'ku',
+    '冷':'leng','热':'re','暖':'nuan','甜':'tian','苦':'ku','辣':'la','酸':'suan',
+    '高':'gao','矮':'ai','胖':'pang','瘦':'shou','强':'qiang','弱':'ruo',
+    '静':'jing','动':'dong','快':'kuai','慢':'man','灵':'ling','呆':'dai',
+    '花':'hua','草':'cao','树':'shu','林':'lin','山':'shan','水':'shui','海':'hai',
+    '月':'yue','星':'xing','云':'yun','风':'feng','雨':'yu','雪':'xue','阳':'yang',
+    '春':'chun','夏':'xia','秋':'qiu','冬':'dong','晨':'chen','暮':'mu','夜':'ye',
+    '医':'yi','护':'hu','画':'hua','琴':'qin','棋':'qi','书':'shu','舞':'wu',
+    '歌':'ge','诗':'shi','茶':'cha','酒':'jiu','剑':'jian','刀':'dao',
+    '猫':'mao','狗':'gou','龙':'long','凤':'feng','虎':'hu','狼':'lang',
+    '学':'xue','教':'jiao','研':'yan','设':'she','编':'bian','程':'cheng',
+    '梦':'meng','幻':'huan','心':'xin','念':'nian','忆':'yi','思':'si',
+    '清':'qing','浅':'qian','深':'shen','白':'bai','黑':'hei','红':'hong',
+    '蓝':'lan','紫':'zi','金':'jin','银':'yin','玉':'yu','冰':'bing',
+    '晴':'qing','雨':'yu','霜':'shuang','露':'lu','霞':'xia','虹':'hong',
+    '南':'nan','北':'bei','东':'dong','西':'xi','城':'cheng','镇':'zhen',
+    '安':'an','宁':'ning','静':'jing','和':'he','平':'ping','乐':'le',
+    '柔':'rou','刚':'gang','傲':'ao','温':'wen','婉':'wan','雅':'ya',
+    '简':'jian','素':'su','华':'hua','丽':'li','秀':'xiu','慧':'hui',
+    '言':'yan','语':'yu','笑':'xiao','泪':'lei','怒':'nu','喜':'xi'
+  };
+
   // 1. 尝试从人设中提取英文名或外文名
   var englishName = '';
   // 匹配 "英文名：xxx" 或 "English name: xxx" 或 "也叫xxx"
@@ -8544,33 +8571,10 @@ function generateCharWxId(name, persona) {
     if (traitMatch) keywords += traitMatch[1].substring(0, 2);
 
     if (keywords) {
-      // 将关键词转为类似拼音的字母组合（取每个字的常见拼音首字母）
-      var pinyinMap = {
-        '大':'da','小':'xiao','老':'lao','少':'shao','美':'mei','帅':'shuai','酷':'ku',
-        '冷':'leng','热':'re','暖':'nuan','甜':'tian','苦':'ku','辣':'la','酸':'suan',
-        '高':'gao','矮':'ai','胖':'pang','瘦':'shou','强':'qiang','弱':'ruo',
-        '静':'jing','动':'dong','快':'kuai','慢':'man','灵':'ling','呆':'dai',
-        '花':'hua','草':'cao','树':'shu','林':'lin','山':'shan','水':'shui','海':'hai',
-        '月':'yue','星':'xing','云':'yun','风':'feng','雨':'yu','雪':'xue','阳':'yang',
-        '春':'chun','夏':'xia','秋':'qiu','冬':'dong','晨':'chen','暮':'mu','夜':'ye',
-        '医':'yi','护':'hu','画':'hua','琴':'qin','棋':'qi','书':'shu','舞':'wu',
-        '歌':'ge','诗':'shi','茶':'cha','酒':'jiu','剑':'jian','刀':'dao',
-        '猫':'mao','狗':'gou','龙':'long','凤':'feng','虎':'hu','狼':'lang',
-        '学':'xue','教':'jiao','研':'yan','设':'she','编':'bian','程':'cheng',
-        '梦':'meng','幻':'huan','心':'xin','念':'nian','忆':'yi','思':'si',
-        '清':'qing','浅':'qian','深':'shen','白':'bai','黑':'hei','红':'hong',
-        '蓝':'lan','紫':'zi','金':'jin','银':'yin','玉':'yu','冰':'bing',
-        '晴':'qing','雨':'yu','霜':'shuang','露':'lu','霞':'xia','虹':'hong',
-        '南':'nan','北':'bei','东':'dong','西':'xi','城':'cheng','镇':'zhen',
-        '安':'an','宁':'ning','静':'jing','和':'he','平':'ping','乐':'le',
-        '柔':'rou','刚':'gang','傲':'ao','温':'wen','婉':'wan','雅':'ya',
-        '简':'jian','素':'su','华':'hua','丽':'li','秀':'xiu','慧':'hui',
-        '言':'yan','语':'yu','笑':'xiao','泪':'lei','怒':'nu','喜':'xi'
-      };
       var pinyinStr = '';
       for (var ci = 0; ci < keywords.length; ci++) {
         var ch = keywords.charAt(ci);
-        if (pinyinMap[ch]) {
+        if (pinyinMap && pinyinMap[ch]) {
           pinyinStr += pinyinMap[ch];
         }
       }
@@ -8585,7 +8589,7 @@ function generateCharWxId(name, persona) {
       var namePinyin = '';
       for (var ni = 0; ni < nameChars.length && ni < 3; ni++) {
         var nc = nameChars.charAt(ni);
-        if (pinyinMap[nc]) namePinyin += pinyinMap[nc];
+        if (pinyinMap && pinyinMap[nc]) namePinyin += pinyinMap[nc];
       }
       if (namePinyin.length >= 2) {
         prefix = namePinyin;

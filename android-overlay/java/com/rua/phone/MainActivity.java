@@ -13,10 +13,12 @@ import com.getcapacitor.BridgeActivity;
 /**
  * rua小手机 主 Activity。
  *
- * 承担两件事：
+ * 承担三件事：
  *  1) 沉浸式全屏（真·铺满）：隐藏状态栏/导航栏，网页内容从屏幕最顶端 (0,0) 开始绘制，刘海/挖孔也铺满；
  *     手势划出系统栏后，焦点回来会自动再隐藏（粘性沉浸式）。
  *  2) 注册 window.AndroidFileSaver，让网页能把文件保存到手机「下载」目录。
+ *  3) 注册 window.AndroidNetease，让网易云 App 能绕过 WebView 的 CORS 直连官方 API
+ *     （官方接口实测返回 200 但不发 Access-Control-Allow-Origin，纯网页侧无解）。
  *
  * ★「顶部一条状态栏高度的纯色带子」的根因（AOSP com.android.internal.policy.PhoneWindow）：
  *
@@ -61,6 +63,7 @@ public class MainActivity extends BridgeActivity {
             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 
     private boolean fileSaverReady = false;
+    private boolean neteaseProxyReady = false;
     private boolean cutoutApplied = false;
     private boolean imeInsetsHooked = false;
 
@@ -69,6 +72,7 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState); // 必须最先调用，之后 bridge / WebView 才存在
 
         installFileSaver();
+        installNeteaseProxy(); // 网易云直连接口（失败会自动降级到镜像源，不影响其它功能）
         applyEdgeToEdge(); // ★ 真全屏的关键：decorFits=false + 刘海铺满 + layout flag 双保险
         hideSystemUI();
     }
@@ -86,6 +90,28 @@ public class MainActivity extends BridgeActivity {
             }
         } catch (Throwable ignored) {
             // 极端情况下（布局异常）注册失败也不应让 App 崩溃，网页端会自动走 Blob 兜底
+        }
+    }
+
+    /**
+     * 注册 window.AndroidNetease，让网页能绕过 WebView 的 CORS 限制直连网易云官方 API。
+     *
+     * 与 installFileSaver 同理：重复调用无害，任何异常都不让 App 崩溃 ——
+     * 注册失败时网页端 window.AndroidNetease 是 undefined，会自动降级到第三方镜像源，
+     * 只是数据来源不同，不会白屏、也不会影响其它功能。
+     */
+    private void installNeteaseProxy() {
+        if (neteaseProxyReady) {
+            return;
+        }
+        try {
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                WebView webView = getBridge().getWebView();
+                webView.addJavascriptInterface(new AndroidNeteaseProxy(webView), "AndroidNetease");
+                neteaseProxyReady = true;
+            }
+        } catch (Throwable ignored) {
+            // 注册失败不致命：网页端会自动降级到镜像源（见 js/app-06.js 的 neFetch）
         }
     }
 
@@ -151,6 +177,7 @@ public class MainActivity extends BridgeActivity {
     public void onStart() {
         super.onStart();
         installFileSaver(); // 兜底再说一次，确保接口一定在
+        installNeteaseProxy(); // 同理再确认一次，避免 WebView 重建后接口丢失
         applyEdgeToEdge();  // 内容区已就绪，再确认一次全屏设置（含软键盘监听）
         hideSystemUI();
     }
